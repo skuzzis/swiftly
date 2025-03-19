@@ -6,6 +6,7 @@
 #include <core/console/console.h>
 
 #include <server/configuration/configuration.h>
+#include <server/translations/translations.h>
 #include <filesystem/logs/logger.h>
 
 #include <sdk/game.h>
@@ -22,6 +23,7 @@ IVEngineServer2* engine = nullptr;
 
 Configuration g_Config;
 Logger g_Logger;
+Translations g_translations;
 
 //////////////////////////////////////////////////////////////
 /////////////////          Core Class          //////////////
@@ -50,6 +52,8 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
         PRINTRET("Failed to load configurations. The framework will not work.\n", false);
 
     g_Logger.AddLogger("core", false);
+
+    g_translations.LoadTranslations();
 
     return true;
 }

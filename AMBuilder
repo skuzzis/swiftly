@@ -24,6 +24,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/sdk/game.cpp',
 
     'src/server/configuration/configuration.cpp',
+    'src/server/translations/translation.cpp',
+    'src/server/translations/translations.cpp',
     
     'src/utils/utils.cpp'
   ]
