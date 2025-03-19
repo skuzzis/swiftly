@@ -4,6 +4,8 @@
 #include <chrono>
 #include <random>
 #include <cstddef>
+#include <server/configuration/configuration.h>
+#include <filesystem/logs/logger.h>
 
 const char* wws = " \t\n\r\f\v";
 
@@ -114,6 +116,13 @@ void PLUGIN_PRINT(std::string category, std::string str)
         if(splitted[i] == "" && i+1 == splitted.size()) break;
         META_CONPRINTF("%s%s\n", final_string.c_str(), splitted[i].c_str());
     }
+
+    if (g_Config.FetchValue<bool>("core.logging.save_core_messages")) {
+        if (g_Logger.FetchLogger("core").has_value()) {
+            str.pop_back();
+            g_Logger.FetchLogger("core").value().WriteLog(LogType_t::Common, "[" + category + "] " + str);
+        }
+    }
 }
 
 void PLUGIN_PRINTF(std::string category, std::string str, ...)
@@ -132,6 +141,14 @@ void PLUGIN_PRINTF(std::string category, std::string str, ...)
     for(int i = 0; i < splitted.size(); i++) {
         if(splitted[i] == "" && i+1 == splitted.size()) break;
         META_CONPRINTF("%s%s\n", final_prefix.c_str(), splitted[i].c_str());
+    }
+
+    if (g_Config.FetchValue<bool>("core.logging.save_core_messages")) {
+        if (g_Logger.FetchLogger("core").has_value()) {
+            std::string buf = buffer;
+            buf.pop_back();
+            g_Logger.FetchLogger("core").value().WriteLog(LogType_t::Common, "[" + category + "] " + buf);
+        }
     }
 }
 

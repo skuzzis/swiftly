@@ -16,6 +16,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/core/console/console.cpp',
 
     'src/filesystem/files/files.cpp',
+    'src/filesystem/logs/logger.cpp',
+    'src/filesystem/logs/log.cpp',
 
     'src/memory/encoders/json.cpp',
     

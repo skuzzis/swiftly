@@ -6,6 +6,7 @@
 #include <core/console/console.h>
 
 #include <server/configuration/configuration.h>
+#include <filesystem/logs/logger.h>
 
 #include <sdk/game.h>
 
@@ -13,12 +14,14 @@
 /////////////////  Core Variables & Functions  //////////////
 ////////////////////////////////////////////////////////////
 SwiftlyS2 g_Plugin;
+IVEngineServer2* engine = nullptr;
 
 //////////////////////////////////////////////////////////////
 /////////////////      Internal Variables      //////////////
 ////////////////////////////////////////////////////////////
 
 Configuration g_Config;
+Logger g_Logger;
 
 //////////////////////////////////////////////////////////////
 /////////////////          Core Class          //////////////
@@ -37,12 +40,16 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
 
     SetupConsoleColors();
 
+    GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer2, INTERFACEVERSION_VENGINESERVER);
+
     HandleConfigExamples();
 
     if(g_Config.LoadConfiguration())
         PRINT("The configurations has been succesfully loaded.\n");
     else
         PRINTRET("Failed to load configurations. The framework will not work.\n", false);
+
+    g_Logger.AddLogger("core", false);
 
     return true;
 }
