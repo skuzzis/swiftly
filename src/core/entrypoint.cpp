@@ -1,7 +1,11 @@
 #include "entrypoint.h"
 
+#include <utils/common.h>
+
 #include <core/configuration/setup.h>
 #include <core/console/console.h>
+
+#include <server/configuration/configuration.h>
 
 #include <sdk/game.h>
 
@@ -13,6 +17,8 @@ SwiftlyS2 g_Plugin;
 //////////////////////////////////////////////////////////////
 /////////////////      Internal Variables      //////////////
 ////////////////////////////////////////////////////////////
+
+Configuration g_Config;
 
 //////////////////////////////////////////////////////////////
 /////////////////          Core Class          //////////////
@@ -30,6 +36,13 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
     g_SMAPI->AddListener(this, this);
 
     SetupConsoleColors();
+
+    HandleConfigExamples();
+
+    if(g_Config.LoadConfiguration())
+        PRINT("The configurations has been succesfully loaded.\n");
+    else
+        PRINTRET("Failed to load configurations. The framework will not work.\n", false);
 
     return true;
 }

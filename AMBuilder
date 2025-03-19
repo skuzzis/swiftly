@@ -16,8 +16,12 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/core/console/console.cpp',
 
     'src/filesystem/files/files.cpp',
+
+    'src/memory/encoders/json.cpp',
     
     'src/sdk/game.cpp',
+
+    'src/server/configuration/configuration.cpp',
     
     'src/utils/utils.cpp'
   ]
