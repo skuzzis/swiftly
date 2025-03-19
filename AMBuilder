@@ -12,11 +12,55 @@ for sdk_target in MMSPlugin.sdk_targets:
 
   binary.sources += [
     'src/core/entrypoint.cpp',
-    'src/sdk/game.cpp'
+    'src/core/configuration/setup.cpp',
+    'src/core/console/console.cpp',
+
+    'src/filesystem/files/files.cpp',
+    
+    'src/sdk/game.cpp',
+    
+    'src/utils/utils.cpp'
   ]
 
+  if binary.compiler.target.platform == 'linux':
+    binary.compiler.postlink += [
+      os.path.join(builder.sourcePath, 'vendor', 'bzip2', 'linuxsteamrt64', 'lib', 'libbz2.a'),
+    ]
+  else:
+    binary.compiler.postlink += [
+      os.path.join(builder.sourcePath, 'vendor', 'bzip2', 'win64', 'lib', 'bz2.lib'),
+
+      "psapi.lib",
+      "winmm.lib",
+      "ws2_32.lib",
+      "wldap32.lib",
+      "advapi32.lib",
+      "kernel32.lib",
+      "comdlg32.lib",
+      "crypt32.lib",
+      "normaliz.lib",
+      "wsock32.lib",
+      "legacy_stdio_definitions.lib",
+      "legacy_stdio_wide_specifiers.lib",
+      "user32.lib",
+      "gdi32.lib",
+      "winspool.lib",
+      "shell32.lib",
+      "ole32.lib",
+      "oleaut32.lib",
+      "uuid.lib",
+      "odbc32.lib",
+      "odbccp32.lib",
+      "msvcrt.lib",
+			os.path.join(sdk['path'], 'lib', 'public', 'win64', 'steam_api64.lib')
+    ]
+
   binary.compiler.cxxincludes += [
+    os.path.join(builder.sourcePath, 'vendor'),
+    os.path.join(builder.sourcePath, 'vendor', 'bzip2', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include'),
+    
     os.path.join(builder.sourcePath, 'src'),
+
     os.path.join(sdk['path']),
   ]
 

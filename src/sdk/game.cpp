@@ -1,6 +1,6 @@
 #include "game.h"
 
-const char* GetGameName()
+std::string GetGameName()
 {
 #if SOURCE_ENGINE == SE_CS2
     return "cs2";
