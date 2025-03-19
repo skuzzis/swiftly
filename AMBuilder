@@ -1,0 +1,39 @@
+# vim: set sts=2 ts=8 sw=2 tw=99 et ft=python: 
+import os, fnmatch
+
+MMSPlugin.plugin_name = 'swiftly'
+MMSPlugin.plugin_alias = 'swiftly'
+
+for sdk_target in MMSPlugin.sdk_targets:
+  sdk = sdk_target.sdk
+  cxx = sdk_target.cxx
+
+  binary = MMSPlugin.HL2Library(builder, cxx, MMSPlugin.plugin_name, sdk)
+
+  binary.sources += [
+    'src/core/entrypoint.cpp',
+    'src/sdk/game.cpp'
+  ]
+
+  binary.compiler.cxxincludes += [
+    os.path.join(builder.sourcePath, 'src'),
+    os.path.join(sdk['path']),
+  ]
+
+  protobufSources = []
+  for root, dirs, files in os.walk(os.path.join(builder.sourcePath, "protobufs", sdk['name'])):
+    for _file in files:
+      if fnmatch.fnmatch(_file, '*.proto'):
+        protobufSources.append(os.path.join(root, _file).replace("\\", "/"))
+
+  protoc_builder = builder.tools.Protoc(protoc = sdk_target.protoc, sources = protobufSources)
+
+  protoc_builder.protoc.includes = [
+		os.path.join(sdk['path'], 'thirdparty', 'protobuf-3.21.8', 'src'),
+		os.path.join(builder.sourcePath, 'protobufs', sdk['name'])
+	]
+
+  binary.custom = [protoc_builder]
+
+  nodes = builder.Add(binary)
+  MMSPlugin.binaries += [nodes]
