@@ -12,14 +12,19 @@
 
 #include <memory/gamedata/gamedata.h>
 
+#include <sdk/access.h>
 #include <sdk/game.h>
+
+#include <schemasystem/schemasystem.h>
 
 //////////////////////////////////////////////////////////////
 /////////////////  Core Variables & Functions  //////////////
 ////////////////////////////////////////////////////////////
+
 SwiftlyS2 g_Plugin;
 IVEngineServer2* engine = nullptr;
 ISource2Server* server = nullptr;
+CSchemaSystem* g_pSchemaSystem2 = nullptr;
 
 //////////////////////////////////////////////////////////////
 /////////////////      Internal Variables      //////////////
@@ -29,6 +34,7 @@ Configuration g_Config;
 Logger g_Logger;
 Translations g_translations;
 GameData g_GameData;
+SDKAccess g_sdk;
 
 //////////////////////////////////////////////////////////////
 /////////////////          Core Class          //////////////
@@ -48,6 +54,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
     SetupConsoleColors();
 
     GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer2, INTERFACEVERSION_VENGINESERVER);
+    GET_V_IFACE_CURRENT(GetEngineFactory, g_pSchemaSystem2, CSchemaSystem, SCHEMASYSTEM_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetServerFactory, server, ISource2Server, INTERFACEVERSION_SERVERGAMEDLL);
 
     HandleConfigExamples();
@@ -59,6 +66,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
 
     g_Logger.AddLogger("core", false);
 
+    g_sdk.LoadSDKData();
     g_Config.LoadPluginConfigurations();
     g_GameData.LoadGameData();
     g_GameData.PerformPatches();

@@ -22,6 +22,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/memory/encoders/json.cpp',
     'src/memory/gamedata/gamedata.cpp',
     
+    'src/sdk/access.cpp',
+    'src/sdk/schema.cpp',
     'src/sdk/game.cpp',
 
     'src/server/configuration/configuration.cpp',
