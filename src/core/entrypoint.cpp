@@ -7,7 +7,10 @@
 
 #include <server/configuration/configuration.h>
 #include <server/translations/translations.h>
+
 #include <filesystem/logs/logger.h>
+
+#include <memory/gamedata/gamedata.h>
 
 #include <sdk/game.h>
 
@@ -16,6 +19,7 @@
 ////////////////////////////////////////////////////////////
 SwiftlyS2 g_Plugin;
 IVEngineServer2* engine = nullptr;
+ISource2Server* server = nullptr;
 
 //////////////////////////////////////////////////////////////
 /////////////////      Internal Variables      //////////////
@@ -24,6 +28,7 @@ IVEngineServer2* engine = nullptr;
 Configuration g_Config;
 Logger g_Logger;
 Translations g_translations;
+GameData g_GameData;
 
 //////////////////////////////////////////////////////////////
 /////////////////          Core Class          //////////////
@@ -43,6 +48,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
     SetupConsoleColors();
 
     GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer2, INTERFACEVERSION_VENGINESERVER);
+    GET_V_IFACE_ANY(GetServerFactory, server, ISource2Server, INTERFACEVERSION_SERVERGAMEDLL);
 
     HandleConfigExamples();
 
@@ -52,6 +58,10 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
         PRINTRET("Failed to load configurations. The framework will not work.\n", false);
 
     g_Logger.AddLogger("core", false);
+
+    g_Config.LoadPluginConfigurations();
+    g_GameData.LoadGameData();
+    g_GameData.PerformPatches();
 
     g_translations.LoadTranslations();
 

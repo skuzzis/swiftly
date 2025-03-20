@@ -20,6 +20,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/filesystem/logs/log.cpp',
 
     'src/memory/encoders/json.cpp',
+    'src/memory/gamedata/gamedata.cpp',
     
     'src/sdk/game.cpp',
 
@@ -27,7 +28,11 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/server/translations/translation.cpp',
     'src/server/translations/translations.cpp',
     
-    'src/utils/utils.cpp'
+    'src/utils/platform/platform_win.cpp',
+    'src/utils/platform/platform_linux.cpp',
+    'src/utils/utils.cpp',
+
+    "vendor/dynlibutils/module.cpp"
   ]
 
   if binary.compiler.target.platform == 'linux':

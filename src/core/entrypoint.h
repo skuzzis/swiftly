@@ -27,6 +27,7 @@ public:
 
 extern SwiftlyS2 g_Plugin;
 extern IVEngineServer2* engine;
+extern ISource2Server* server;
 PLUGIN_GLOBALVARS();
 
 #endif
