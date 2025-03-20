@@ -1,5 +1,9 @@
 #include "entrypoint.h"
 
+#include <tier1/convar.h>
+#include <interfaces/interfaces.h>
+#include <metamod_oslink.h>
+
 #include <utils/common.h>
 
 #include <core/configuration/setup.h>
@@ -18,6 +22,16 @@
 #include <schemasystem/schemasystem.h>
 
 //////////////////////////////////////////////////////////////
+/////////////////       SourceHook Hooks       //////////////
+////////////////////////////////////////////////////////////
+
+class GameSessionConfiguration_t
+{
+};
+
+SH_DECL_HOOK3_void(INetworkServerService, StartupServer, SH_NOATTRIB, 0, const GameSessionConfiguration_t&, ISource2WorldSession*, const char*);
+
+//////////////////////////////////////////////////////////////
 /////////////////  Core Variables & Functions  //////////////
 ////////////////////////////////////////////////////////////
 
@@ -25,6 +39,9 @@ SwiftlyS2 g_Plugin;
 IVEngineServer2* engine = nullptr;
 ISource2Server* server = nullptr;
 CSchemaSystem* g_pSchemaSystem2 = nullptr;
+CGameEntitySystem* g_pGameEntitySystem = nullptr;
+IGameResourceService* g_pGameResourceService = nullptr;
+CEntitySystem* g_pEntitySystem = nullptr;
 
 //////////////////////////////////////////////////////////////
 /////////////////      Internal Variables      //////////////
@@ -43,18 +60,19 @@ SDKAccess g_sdk;
 PLUGIN_EXPOSE(SwiftlyS2, g_Plugin);
 bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool late)
 {
+    PLUGIN_SAVEVARS();
+    g_SMAPI->AddListener(this, this);
+
     if(GetGameName() == "unknown") {
         ismm->Format(error, maxlen, "Unknown game detected.");
         return false;
     }
 
-    PLUGIN_SAVEVARS();
-    g_SMAPI->AddListener(this, this);
-
     SetupConsoleColors();
 
     GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer2, INTERFACEVERSION_VENGINESERVER);
     GET_V_IFACE_CURRENT(GetEngineFactory, g_pSchemaSystem2, CSchemaSystem, SCHEMASYSTEM_INTERFACE_VERSION);
+    GET_V_IFACE_CURRENT(GetEngineFactory, g_pGameResourceService, IGameResourceService, GAMERESOURCESERVICESERVER_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetServerFactory, server, ISource2Server, INTERFACEVERSION_SERVERGAMEDLL);
 
     HandleConfigExamples();
@@ -63,6 +81,8 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
         PRINT("The configurations has been succesfully loaded.\n");
     else
         PRINTRET("Failed to load configurations. The framework will not work.\n", false);
+
+    META_CONVAR_REGISTER(FCVAR_RELEASE | FCVAR_SERVER_CAN_EXECUTE | FCVAR_CLIENT_CAN_EXECUTE | FCVAR_GAMEDLL);
 
     g_Logger.AddLogger("core", false);
 
@@ -73,6 +93,8 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
 
     g_translations.LoadTranslations();
 
+    PRINT("Succesfully started.\n");
+
     return true;
 }
 
@@ -82,6 +104,16 @@ bool SwiftlyS2::Unload(char *error, size_t maxlen)
 }
 
 void SwiftlyS2::AllPluginsLoaded()
+{
+
+}
+
+void SwiftlyS2::OnLevelInit( char const *pMapName, char const *pMapEntities, char const *pOldLevel, char const *pLandmarkName, bool loadGame, bool background )
+{
+
+}
+
+void SwiftlyS2::OnLevelShutdown()
 {
 
 }
@@ -98,7 +130,7 @@ bool SwiftlyS2::Unpause(char* error, size_t maxlen)
 
 const char* SwiftlyS2::GetLicense()
 {
-    return "Gnu GPL 3 License";
+    return "GNU GPL 3";
 }
 
 const char* SwiftlyS2::GetVersion()
