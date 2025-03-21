@@ -19,266 +19,411 @@ bool ConfigurationError(std::string configuration_file, std::string error)
     return false;
 }
 
-void WriteJSONFile(std::string path, nlohmann::json& j)
+void WriteJSONFile(std::string path, rapidjson::Value& j)
 {
-    Files::Write(path, j.dump(4), false);
+    rapidjson::StringBuffer buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+
+    j.Accept(writer);
+    std::string content = buffer.GetString();
+
+    Files::Write(path, content, false);
 }
 
-nlohmann::json& GetJSONDoc(nlohmann::json& doc, std::string& key, nlohmann::json& value, bool& wasCreated)
+rapidjson::Value& GetJSONDoc(rapidjson::Document& doc, std::string key, rapidjson::Value& defaultValue, bool& wasCreated)
 {
+    rapidjson::Value* currentDoc = &doc;
     auto keys = explode(key, ".");
-    nlohmann::json* currentDoc = &doc;
 
-    while(keys.size()) {
-        std::string currentKey = keys.front();
+    while (keys.size() > 1)
+    {
+        std::string key = keys[0];
         keys.erase(keys.begin());
 
-        if (!currentDoc->contains(currentKey) || !(*currentDoc)[currentKey].is_object()) {
-            (*currentDoc)[currentKey] = nlohmann::json::object();
-        }
-        currentDoc = &((*currentDoc)[currentKey]);
+        if (!currentDoc->HasMember(key.c_str()))
+            currentDoc->AddMember(rapidjson::Value().SetString(key.c_str(), doc.GetAllocator()), rapidjson::Value(rapidjson::kObjectType), doc.GetAllocator());
+        else if (!currentDoc->operator[](key.c_str()).IsObject())
+            currentDoc->operator[](key.c_str()).SetObject();
+
+        currentDoc = &currentDoc->operator[](key.c_str());
     }
 
-    std::string lastKey = keys.front();
-    if (!currentDoc->contains(lastKey)) {
-        (*currentDoc)[lastKey] = value;
+    if (!currentDoc->HasMember(keys[0].c_str()))
+    {
+        currentDoc->AddMember(rapidjson::Value().SetString(keys[0].c_str(), doc.GetAllocator()), defaultValue, doc.GetAllocator());
         wasCreated = true;
     }
-    return (*currentDoc)[lastKey];
+
+    return currentDoc->operator[](keys[0].c_str());
 }
 
 template <class T>
-void RegisterConfiguration(bool& wasCreated, nlohmann::json& document, std::string configFilePath, std::string config_prefix, std::string key, T default_value)
+void RegisterConfiguration(bool& wasCreated, rapidjson::Document& document, std::string configFilePath, std::string config_prefix, std::string key, T default_value)
 {
-    nlohmann::json defaultValue = default_value;
-    nlohmann::json& jsonDoc = GetJSONDoc(document, key, defaultValue, wasCreated);
+    rapidjson::Value defaultValue;
 
-    if constexpr (std::is_same<T, std::string>::value ||
-                  std::is_same<T, const char*>::value)
+    if constexpr (std::is_same<T, std::string>::value)
+        defaultValue.SetString(default_value.c_str(), document.GetAllocator());
+    else if constexpr (std::is_same<T, const char*>::value)
+        defaultValue.SetString(default_value, document.GetAllocator());
+    else if constexpr (std::is_same<T, bool>::value)
+        defaultValue.SetBool(default_value);
+    else if constexpr (std::is_same<T, uint64_t>::value)
+        defaultValue.SetUint64(default_value);
+    else if constexpr (std::is_same<T, uint32_t>::value)
+        defaultValue.SetUint(default_value);
+    else if constexpr (std::is_same<T, uint16_t>::value)
+        defaultValue.SetUint(default_value);
+    else if constexpr (std::is_same<T, uint8_t>::value)
+        defaultValue.SetUint(default_value);
+    else if constexpr (std::is_same<T, int64_t>::value)
+        defaultValue.SetInt64(default_value);
+    else if constexpr (std::is_same<T, int32_t>::value)
+        defaultValue.SetInt(default_value);
+    else if constexpr (std::is_same<T, int16_t>::value)
+        defaultValue.SetInt(default_value);
+    else if constexpr (std::is_same<T, int8_t>::value)
+        defaultValue.SetInt(default_value);
+    else if constexpr (std::is_same<T, float>::value)
+        defaultValue.SetFloat(default_value);
+    else if constexpr (std::is_same<T, double>::value)
+        defaultValue.SetDouble(default_value);
+
+    rapidjson::Value& jsonDoc = GetJSONDoc(document, key, defaultValue, wasCreated);
+
+    if constexpr (std::is_same<T, std::string>::value)
     {
-        if (!jsonDoc.is_string()) {
+        if (!jsonDoc.IsString())
+        {
             jsonDoc = defaultValue;
             wasCreated = true;
         }
-        g_Config.SetValue(config_prefix + "." + key, jsonDoc.get<std::string>());
+
+        g_Config.SetValue(config_prefix + "." + key, std::string(jsonDoc.GetString()));
+    }
+    else if constexpr (std::is_same<T, const char*>::value)
+    {
+        if (!jsonDoc.IsString())
+        {
+            jsonDoc = defaultValue;
+            wasCreated = true;
+        }
+
+        g_Config.SetValue(config_prefix + "." + key, std::string(jsonDoc.GetString()));
     }
     else if constexpr (std::is_same<T, bool>::value)
     {
-        if (!jsonDoc.is_boolean()) {
+        if (!jsonDoc.IsBool())
+        {
             jsonDoc = defaultValue;
             wasCreated = true;
         }
-        g_Config.SetValue(config_prefix + "." + key, jsonDoc.get<bool>());
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetBool());
     }
     else if constexpr (std::is_same<T, uint64_t>::value)
     {
-        if (!jsonDoc.is_number_unsigned()) {
+        if (!jsonDoc.IsUint64())
+        {
             jsonDoc = defaultValue;
             wasCreated = true;
         }
-        g_Config.SetValue(config_prefix + "." + key, jsonDoc.get<uint64_t>());
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetUint64());
     }
-    else if constexpr (std::is_same<T, uint32_t>::value ||
-                       std::is_same<T, uint16_t>::value ||
-                       std::is_same<T, uint8_t>::value)
+    else if constexpr (std::is_same<T, uint32_t>::value)
     {
-        if (!jsonDoc.is_number_unsigned()) {
+        if (!jsonDoc.IsUint())
+        {
             jsonDoc = defaultValue;
             wasCreated = true;
         }
-        g_Config.SetValue(config_prefix + "." + key, jsonDoc.get<T>());
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetUint());
+    }
+    else if constexpr (std::is_same<T, uint16_t>::value)
+    {
+        if (!jsonDoc.IsUint())
+        {
+            jsonDoc = defaultValue;
+            wasCreated = true;
+        }
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetUint());
+    }
+    else if constexpr (std::is_same<T, uint8_t>::value)
+    {
+        if (!jsonDoc.IsUint())
+        {
+            jsonDoc = defaultValue;
+            wasCreated = true;
+        }
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetUint());
     }
     else if constexpr (std::is_same<T, int64_t>::value)
     {
-        if (!jsonDoc.is_number_integer()) {
+        if (!jsonDoc.IsInt64())
+        {
             jsonDoc = defaultValue;
             wasCreated = true;
         }
-        g_Config.SetValue(config_prefix + "." + key, jsonDoc.get<int64_t>());
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetInt64());
     }
-    else if constexpr (std::is_same<T, int32_t>::value ||
-                       std::is_same<T, int16_t>::value ||
-                       std::is_same<T, int8_t>::value)
+    else if constexpr (std::is_same<T, int32_t>::value)
     {
-        if (!jsonDoc.is_number_integer()) {
+        if (!jsonDoc.IsInt())
+        {
             jsonDoc = defaultValue;
             wasCreated = true;
         }
-        g_Config.SetValue(config_prefix + "." + key, jsonDoc.get<T>());
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetInt());
+    }
+    else if constexpr (std::is_same<T, int16_t>::value)
+    {
+        if (!jsonDoc.IsInt())
+        {
+            jsonDoc = defaultValue;
+            wasCreated = true;
+        }
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetInt());
+    }
+    else if constexpr (std::is_same<T, int8_t>::value)
+    {
+        if (!jsonDoc.IsInt())
+        {
+            jsonDoc = defaultValue;
+            wasCreated = true;
+        }
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetInt());
     }
     else if constexpr (std::is_same<T, float>::value)
     {
-        if (!jsonDoc.is_number_float()) {
+        if (!jsonDoc.IsFloat())
+        {
             jsonDoc = defaultValue;
             wasCreated = true;
         }
-        g_Config.SetValue(config_prefix + "." + key, jsonDoc.get<float>());
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetFloat());
     }
     else if constexpr (std::is_same<T, double>::value)
     {
-        if (!jsonDoc.is_number_float()) {
+        if (!jsonDoc.IsDouble())
+        {
             jsonDoc = defaultValue;
             wasCreated = true;
         }
-        g_Config.SetValue(config_prefix + "." + key, jsonDoc.get<double>());
+
+        g_Config.SetValue(config_prefix + "." + key, jsonDoc.GetDouble());
     }
 }
 
 template <class T>
-void RegisterConfigurationVector(bool& wasCreated, nlohmann::json& document, std::string configFilePath, std::string config_prefix, std::string key, std::vector<T> default_value, bool shouldImplode, std::string delimiter)
+void RegisterConfigurationVector(bool& wasCreated, rapidjson::Document& document, std::string configFilePath, std::string config_prefix, std::string key, std::vector<T> default_value, bool shouldImplode, std::string delimiter)
 {
-    nlohmann::json defaultValue = nlohmann::json::array();
-    for (const T& val : default_value) {
-        defaultValue.push_back(val);
+    rapidjson::Value defaultValue(rapidjson::kArrayType);
+
+    for (const T& val : default_value)
+    {
+        rapidjson::Value defVal;
+
+        if constexpr (std::is_same<T, std::string>::value)
+            defVal.SetString(val.c_str(), document.GetAllocator());
+        else if constexpr (std::is_same<T, const char*>::value)
+            defVal.SetString(val, document.GetAllocator());
+        else if constexpr (std::is_same<T, bool>::value)
+            defVal.SetBool(val);
+        else if constexpr (std::is_same<T, uint64_t>::value)
+            defVal.SetUint64(val);
+        else if constexpr (std::is_same<T, uint32_t>::value)
+            defVal.SetUint(val);
+        else if constexpr (std::is_same<T, uint16_t>::value)
+            defVal.SetUint(val);
+        else if constexpr (std::is_same<T, uint8_t>::value)
+            defVal.SetUint(val);
+        else if constexpr (std::is_same<T, int64_t>::value)
+            defVal.SetInt64(val);
+        else if constexpr (std::is_same<T, int32_t>::value)
+            defVal.SetInt(val);
+        else if constexpr (std::is_same<T, int16_t>::value)
+            defVal.SetInt(val);
+        else if constexpr (std::is_same<T, int8_t>::value)
+            defVal.SetInt(val);
+        else if constexpr (std::is_same<T, float>::value)
+            defVal.SetFloat(val);
+        else if constexpr (std::is_same<T, double>::value)
+            defVal.SetDouble(val);
+
+        defaultValue.PushBack(defVal, document.GetAllocator());
     }
-    
-    nlohmann::json& jsonDoc = GetJSONDoc(document, key, defaultValue, wasCreated);
-    
-    if (!jsonDoc.is_array()) {
+
+    rapidjson::Value& jsonDoc = GetJSONDoc(document, key, defaultValue, wasCreated);
+
+    if (!jsonDoc.IsArray())
+    {
         jsonDoc = defaultValue;
         wasCreated = true;
     }
-    
+
     std::vector<T> result;
-    
-    for (std::size_t i = 0; i < jsonDoc.size(); i++) {
-        auto& element = jsonDoc[i];
-        if constexpr (std::is_same<T, std::string>::value ||
-                      std::is_same<T, const char*>::value)
+
+    auto arr = jsonDoc.GetArray();
+
+    for (rapidjson::SizeType i = 0; i < arr.Size(); i++)
+    {
+        if constexpr (std::is_same<T, std::string>::value)
         {
-            if (!element.is_string()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not a string.\n", key.c_str(), i));
+            if (!arr[i].IsString())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not a string.\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(element.get<std::string>());
+
+            result.push_back(std::string(arr[i].GetString()));
+        }
+        else if constexpr (std::is_same<T, const char*>::value)
+        {
+            if (!arr[i].IsString())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not a string.\n", key.c_str(), i));
+                continue;
+            }
+
+            result.push_back(arr[i].GetString());
         }
         else if constexpr (std::is_same<T, bool>::value)
         {
-            if (!element.is_boolean()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not a boolean.\n", key.c_str(), i));
+            if (!arr[i].IsBool())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not a boolean.\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(element.get<bool>());
+            result.push_back(arr[i].GetBool());
         }
         else if constexpr (std::is_same<T, uint64_t>::value)
         {
-            if (!element.is_number_unsigned()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not an unsigned integer (64-bit).\n", key.c_str(), i));
+            if (!arr[i].IsInt64())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not an unsigned integer (64-bit).\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(element.get<uint64_t>());
+            result.push_back(arr[i].GetUint64());
         }
         else if constexpr (std::is_same<T, uint32_t>::value)
         {
-            if (!element.is_number_unsigned()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not an unsigned integer (32-bit).\n", key.c_str(), i));
+            if (!arr[i].IsInt())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not an unsigned integer (32-bit).\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(element.get<uint32_t>());
+            result.push_back(arr[i].GetUint());
         }
         else if constexpr (std::is_same<T, uint16_t>::value)
         {
-            if (!element.is_number_unsigned()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not an unsigned integer (16-bit).\n", key.c_str(), i));
+            if (!arr[i].IsInt())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not an unsigned integer (16-bit).\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(static_cast<uint16_t>(element.get<uint32_t>()));
+            result.push_back((uint16_t)arr[i].GetUint());
         }
         else if constexpr (std::is_same<T, uint8_t>::value)
         {
-            if (!element.is_number_unsigned()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not an unsigned integer (8-bit).\n", key.c_str(), i));
+            if (!arr[i].IsInt())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not an unsigned integer (8-bit).\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(static_cast<uint8_t>(element.get<uint32_t>()));
+            result.push_back((uint8_t)arr[i].GetUint());
         }
         else if constexpr (std::is_same<T, int64_t>::value)
         {
-            if (!element.is_number_integer()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not an integer (64-bit).\n", key.c_str(), i));
+            if (!arr[i].IsInt64())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not an integer (64-bit).\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(element.get<int64_t>());
+            result.push_back(arr[i].GetInt64());
         }
         else if constexpr (std::is_same<T, int32_t>::value)
         {
-            if (!element.is_number_integer()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not an integer (32-bit).\n", key.c_str(), i));
+            if (!arr[i].IsInt())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not an integer (32-bit).\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(element.get<int32_t>());
+            result.push_back(arr[i].GetInt());
         }
         else if constexpr (std::is_same<T, int16_t>::value)
         {
-            if (!element.is_number_integer()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not an integer (16-bit).\n", key.c_str(), i));
+            if (!arr[i].IsInt())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not an integer (16-bit).\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(static_cast<int16_t>(element.get<int32_t>()));
+            result.push_back((int16_t)arr[i].GetInt());
         }
         else if constexpr (std::is_same<T, int8_t>::value)
         {
-            if (!element.is_number_integer()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not an integer (8-bit).\n", key.c_str(), i));
+            if (!arr[i].IsInt())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not an integer (8-bit).\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(static_cast<int8_t>(element.get<int32_t>()));
+            result.push_back((int8_t)arr[i].GetInt());
         }
         else if constexpr (std::is_same<T, float>::value)
         {
-            if (!element.is_number_float()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not a float.\n", key.c_str(), i));
+            if (!arr[i].IsFloat())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not a float.\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(element.get<float>());
+            result.push_back(arr[i].GetFloat());
         }
         else if constexpr (std::is_same<T, double>::value)
         {
-            if (!element.is_number_float()) {
-                ConfigurationError(configFilePath + ".json",
-                    string_format("The field \"%s[%zu]\" is not a double.\n", key.c_str(), i));
+            if (!arr[i].IsFloat())
+            {
+                ConfigurationError(configFilePath + ".json", string_format("The field \"%s[%d]\" is not a double.\n", key.c_str(), i));
                 continue;
             }
-            result.push_back(element.get<double>());
+            result.push_back(arr[i].GetDouble());
         }
-        else {
-            ConfigurationError(configFilePath + ".json",
-                string_format("Invalid data type: %s.\n", typeid(T).name()));
+        else
+        {
+            ConfigurationError(configFilePath + ".json", string_format("Invalid data type: %s.\n", typeid(T).name()));
             return;
         }
     }
-    
-    if (shouldImplode) {
+
+    if (shouldImplode)
+    {
         std::vector<std::string> implodeArr;
-        for (const T& val : result) {
-            if constexpr (std::is_same<T, std::string>::value ||
-                          std::is_same<T, const char*>::value)
+        for (const T& val : result)
+        {
+            if constexpr (std::is_same<T, std::string>::value)
                 implodeArr.push_back(val);
+            else if constexpr (std::is_same<T, const char*>::value)
+                implodeArr.push_back(std::string(val));
             else
                 implodeArr.push_back(std::to_string(val));
         }
+
         g_Config.SetValue(config_prefix + "." + key, implode(implodeArr, delimiter));
     }
-    else {
+    else
         g_Config.SetValue(config_prefix + "." + key, result);
-    }
 }
 
 bool Configuration::LoadConfiguration()
 {
     auto coreConfigFile = encoders::json::FromString(Files::Read("addons/swiftly/configs/core.json"), "addons/swiftly/configs/core.json");
-    if(!coreConfigFile.is_object() || coreConfigFile.empty()) {
+    if(!coreConfigFile.IsObject()) {
         return ConfigurationError("core.json", "Core configuration file needs to be an object.");
     }
 
@@ -288,7 +433,7 @@ bool Configuration::LoadConfiguration()
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "logging.mode", std::string("daily"));
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "logging.save_core_messages", false);
 
-    std::string loggingMode = coreConfigFile["logging"]["mode"].get<std::string>();
+    std::string loggingMode = coreConfigFile["logging"]["mode"].GetString();
     if (loggingMode != "daily" && loggingMode != "map" && loggingMode != "permanent") {
         return ConfigurationError("core.json", "The field \"logging.mode\" needs to be: \"daily\" or \"map\".");
     }
@@ -406,44 +551,38 @@ bool Configuration::HasKey(std::string key) {
     return config.find(key) != config.end();
 }
 
-void LoadConfigPart(std::string& key, nlohmann::json& document);
+void LoadConfigPart(std::string key, rapidjson::Value& document);
 
-void LoadValue(const char* key, const char* keyname, nlohmann::json& value, std::string separator = ".")
+void LoadValue(const char* key, const char* keyname, rapidjson::Value& value, std::string separator = ".")
 {
-    std::string k = std::string(key) + separator + keyname;
-    
-    if (value.is_boolean())
-    {
-        g_Config.SetPluginValue(k, value.get<bool>());
-    }
-    else if (value.is_string())
-    {
-        g_Config.SetPluginValue(k, value.get<std::string>());
-    }
-    else if (value.is_number_float())
-    {
-        // nlohmann::json uses double for floating-point numbers.
-        g_Config.SetPluginValue(k, value.get<double>());
-    }
-    else if (value.is_number_integer())
-    {
-        // For integers, you can use int64_t (or choose a different integer type as needed).
-        g_Config.SetPluginValue(k, value.get<int64_t>());
-    }
-    else if (value.is_null())
-    {
+    std::string k = key + separator + keyname;
+    if (value.IsBool())
+        g_Config.SetPluginValue(k, value.GetBool());
+    else if (value.IsString())
+        g_Config.SetPluginValue(k, std::string(value.GetString()));
+    else if (value.IsDouble())
+        g_Config.SetPluginValue(k, value.GetDouble());
+    else if (value.IsFloat())
+        g_Config.SetPluginValue(k, value.GetFloat());
+    else if (value.IsInt64())
+        g_Config.SetPluginValue(k, value.GetInt64());
+    else if (value.IsInt())
+        g_Config.SetPluginValue(k, value.GetInt());
+    else if (value.IsUint64())
+        g_Config.SetPluginValue(k, value.GetUint64());
+    else if (value.IsUint())
+        g_Config.SetPluginValue(k, value.GetUint());
+    else if (value.IsNull())
         g_Config.SetPluginValue(k, nullptr);
-    }
-    else if (value.is_object())
-    {
+    else if (value.IsObject()) {
         g_Config.SetPluginValue(k, string_format("JSON⇚%s⇛", encoders::json::ToString(value).c_str()));
         LoadConfigPart(k, value);
     }
-    else if (value.is_array())
+    else if (value.IsArray())
     {
         g_Config.SetPluginValue(k, string_format("JSON⇚%s⇛", encoders::json::ToString(value).c_str()));
-        g_Config.SetArraySize(k, value.size());
-        for (int i = 0; i < value.size(); i++)
+        g_Config.SetArraySize(k, value.Size());
+        for (size_t i = 0; i < value.Size(); i++)
         {
             g_Config.SetPluginValue(string_format("%s[%d]", k.c_str(), i).c_str(), nullptr);
             LoadValue(k.c_str(), string_format("[%d]", i).c_str(), value[i], "");
@@ -451,12 +590,12 @@ void LoadValue(const char* key, const char* keyname, nlohmann::json& value, std:
     }
 }
 
-void LoadConfigPart(std::string& key, nlohmann::json& document)
+void LoadConfigPart(std::string key, rapidjson::Value& document)
 {
-    for (auto it = document.begin(); it != document.end(); ++it)
+    for (auto it = document.MemberBegin(); it != document.MemberEnd(); ++it)
     {
-        std::string keyname = it.key();
-        LoadValue(key.c_str(), keyname.c_str(), it.value());
+        std::string keyname = it->name.GetString();
+        LoadValue(key.c_str(), keyname.c_str(), it->value);
     }
 }
 
@@ -473,14 +612,14 @@ void Configuration::LoadPluginConfigurations()
         configFileName = replace(configFileName, "/", ".");
 
         auto configurationFile = encoders::json::FromString(Files::Read(configFilePath), configFilePath);
-        if (!configurationFile.is_object() || configurationFile.empty())
+        if (!configurationFile.IsObject())
         {
             ConfigurationError(configFileName, "Configuration file needs to be an object.");
             continue;
         }
 
         std::string main_key = explode(configFileName, ".json")[0];
-        auto& root = configurationFile;
+        rapidjson::Value& root = configurationFile;
 
         g_Config.SetPluginValue(main_key, encoders::json::ToString(root));
         LoadConfigPart(main_key, root);
@@ -507,7 +646,7 @@ void Configuration::LoadPluginConfig(std::string key)
         this->config.erase(k);
 
     auto configurationFile = encoders::json::FromString(Files::Read(configFilePath), configFilePath);
-    if (!configurationFile.is_object() || configurationFile.empty())
+    if (!configurationFile.IsObject())
     {
         ConfigurationError(configFileName, "Configuration file needs to be an object.");
         return;
@@ -517,7 +656,7 @@ void Configuration::LoadPluginConfig(std::string key)
     configFileName = replace(configFileName, "\\", ".");
     std::string main_key = explode(configFileName, ".json")[0];
 
-    auto& root = configurationFile;
+    rapidjson::Value& root = configurationFile;
 
     g_Config.SetPluginValue(main_key, encoders::json::ToString(root));
     LoadConfigPart(main_key, root);

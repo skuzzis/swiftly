@@ -9,24 +9,24 @@
 
 #include <server/configuration/configuration.h>
 
-#include <nlohmann/json.hpp>
+#include <rapidjson/json.hpp>
 
 #define HAS_MEMBER(DOCUMENT, MEMBER_NAME, MEMBER_PATH)                                     \
-    if (!DOCUMENT.contains(MEMBER_NAME))                                                   \
+    if (!DOCUMENT.HasMember(MEMBER_NAME))                                                  \
     {                                                                                      \
         TranslationsError(string_format("The field \"%s\" doesn't exists.", MEMBER_PATH)); \
         continue;                                                                          \
     }
 
 #define IS_STRING(DOCUMENT, MEMBER_NAME, MEMBER_PATH)                                       \
-    if (!DOCUMENT[MEMBER_NAME].is_string())                                                 \
+    if (!DOCUMENT[MEMBER_NAME].IsString())                                                  \
     {                                                                                       \
         TranslationsError(string_format("The field \"%s\" is not a string.", MEMBER_PATH)); \
         continue;                                                                           \
     }
 
 #define IS_OBJECT(DOCUMENT, MEMBER_NAME, MEMBER_PATH)                                        \
-    if (!DOCUMENT[MEMBER_NAME].is_object())                                                  \
+    if (!DOCUMENT[MEMBER_NAME].IsObject())                                                   \
     {                                                                                        \
         TranslationsError(string_format("The field \"%s\" is not an object.", MEMBER_PATH)); \
         continue;                                                                            \
@@ -60,27 +60,27 @@ void Translations::LoadTranslations()
         std::string mainTranslationKey = explode(explode(translationFileName, ".json")[0], "translation.")[1];
 
         auto transFile = encoders::json::FromString(Files::Read(translationFilePath), translationFilePath);
-        if (!transFile.is_object())
+        if (!transFile.IsObject())
         {
             TranslationsError(string_format("Translation file \"%s\" needs to be an object.", translationFileName.c_str()));
             continue;
         }
 
-        for (auto it = transFile.begin(); it != transFile.end(); ++it)
+        for (auto it = transFile.MemberBegin(); it != transFile.MemberEnd(); ++it)
         {
-            std::string key = it.key();
+            std::string key = it->name.GetString();
 
             IS_OBJECT(transFile, key.c_str(), string_format("%s.%s", mainTranslationKey.c_str(), key.c_str()).c_str())
-            HAS_MEMBER(it.value(), "en", string_format("%s.%s.en", mainTranslationKey.c_str(), key.c_str()).c_str())
+            HAS_MEMBER(it->value, "en", string_format("%s.%s.en", mainTranslationKey.c_str(), key.c_str()).c_str())
 
             Translation translation;
-            for (auto it2 = it.value().begin(); it2 != it.value().end(); ++it2)
+            for (auto it2 = it->value.MemberBegin(); it2 != it->value.MemberEnd(); ++it2)
             {
-                std::string transKey = it2.key();
+                std::string transKey = it2->name.GetString();
 
-                IS_STRING(it.value(), transKey.c_str(), string_format("%s.%s.%s", mainTranslationKey.c_str(), key.c_str(), transKey.c_str()).c_str())
+                IS_STRING(it->value, transKey.c_str(), string_format("%s.%s.%s", mainTranslationKey.c_str(), key.c_str(), transKey.c_str()).c_str())
 
-                std::string transVal = it2.value().get<std::string>();
+                std::string transVal = it2->value.GetString();
                 translation.RegisterLanguage(transKey, transVal);
             }
             m_translations.insert({mainTranslationKey + "." + key, translation});

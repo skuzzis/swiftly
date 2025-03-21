@@ -11,21 +11,21 @@
 #include <dynlibutils/module.h>
 
 #define HAS_MEMBER(DOCUMENT, MEMBER_NAME, MEMBER_PATH)                                \
-    if (!DOCUMENT.contains(MEMBER_NAME))                                              \
+    if (!DOCUMENT.HasMember(MEMBER_NAME))                                             \
     {                                                                                 \
         OffsetsError(string_format("The field \"%s\" doesn't exists.", MEMBER_PATH)); \
         continue;                                                                     \
     }
 
 #define IS_NUMBER(DOCUMENT, MEMBER_NAME, MEMBER_PATH)                                  \
-    if (!DOCUMENT[MEMBER_NAME].is_number_integer())                                    \
+    if (!DOCUMENT[MEMBER_NAME].IsInt())                                                \
     {                                                                                  \
         OffsetsError(string_format("The field \"%s\" is not a number.", MEMBER_PATH)); \
         continue;                                                                      \
     }
 
 #define IS_STRING(DOCUMENT, MEMBER_NAME, MEMBER_PATH)                                     \
-    if (!DOCUMENT[MEMBER_NAME].is_string())                                               \
+    if (!DOCUMENT[MEMBER_NAME].IsString())                                                \
     {                                                                                     \
         SignaturesError(string_format("The field \"%s\" is not a string.", MEMBER_PATH)); \
         continue;                                                                         \
@@ -97,29 +97,29 @@ void GameData::LoadSignatures(std::string game_folder)
         if(!ends_with(file, "signatures.json")) continue;
 
         auto j = encoders::json::FromString(Files::Read(file), file);
-        if(!j.is_object()) {
+        if(!j.IsObject()) {
             SignaturesError(string_format("'%s' needs to contain an object.\n", file.c_str()));
             continue;
         }
 
-        for(auto it = j.begin(); it != j.end(); ++it) {
-            std::string name = it.key();
+        for(auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
+            std::string name = it->name.GetString();
 
             if(signatures.find(name) != signatures.end()) {
                 SignaturesError(string_format("The signature for '%s' has been already loaded.", name.c_str()));
                 continue;
             }
 
-            HAS_MEMBER(it.value(), "lib", string_format("%s.lib", name.c_str()));
-            HAS_MEMBER(it.value(), "windows", string_format("%s.windows", name.c_str()));
-            HAS_MEMBER(it.value(), "linux", string_format("%s.linux", name.c_str()));
+            HAS_MEMBER(it->value, "lib", string_format("%s.lib", name.c_str()));
+            HAS_MEMBER(it->value, "windows", string_format("%s.windows", name.c_str()));
+            HAS_MEMBER(it->value, "linux", string_format("%s.linux", name.c_str()));
 
-            IS_STRING(it.value(), "lib", string_format("%s.lib", name.c_str()));
-            IS_STRING(it.value(), "windows", string_format("%s.windows", name.c_str()));
-            IS_STRING(it.value(), "linux", string_format("%s.linux", name.c_str()));
+            IS_STRING(it->value, "lib", string_format("%s.lib", name.c_str()));
+            IS_STRING(it->value, "windows", string_format("%s.windows", name.c_str()));
+            IS_STRING(it->value, "linux", string_format("%s.linux", name.c_str()));
 
-            std::string lib = it.value()["lib"].get<std::string>();
-            std::string rawSig = it.value()[WIN_LINUX("windows", "linux")].get<std::string>();
+            std::string lib = it->value["lib"].GetString();
+            std::string rawSig = it->value[WIN_LINUX("windows", "linux")].GetString();
             SignaturesError(string_format("Searching for \"%s\"...", rawSig.c_str()));
             
             DynLibUtils::CModule module = DetermineModuleByLibrary(lib);
@@ -148,26 +148,26 @@ void GameData::LoadOffsets(std::string game_folder)
         if(!ends_with(file, "offsets.json")) continue;
 
         auto j = encoders::json::FromString(Files::Read(file), file);
-        if(!j.is_object()) {
+        if(!j.IsObject()) {
             OffsetsError(string_format("'%s' needs to contain an object.\n", file.c_str()));
             continue;
         }
 
-        for(auto it = j.begin(); it != j.end(); ++it) {
-            std::string name = it.key();
+        for(auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
+            std::string name = it->name.GetString();
 
             if(offsets.find(name) != offsets.end()) {
                 OffsetsError(string_format("The offsets for '%s' has been already loaded.", name.c_str()));
                 continue;
             }
 
-            HAS_MEMBER(it.value(), "windows", string_format("%s.windows", name.c_str()))
-            HAS_MEMBER(it.value(), "linux", string_format("%s.linux", name.c_str()))
+            HAS_MEMBER(it->value, "windows", string_format("%s.windows", name.c_str()))
+            HAS_MEMBER(it->value, "linux", string_format("%s.linux", name.c_str()))
 
-            IS_NUMBER(it.value(), "windows", string_format("%s.windows", name.c_str()))
-            IS_NUMBER(it.value(), "linux", string_format("%s.linux", name.c_str()))
+            IS_NUMBER(it->value, "windows", string_format("%s.windows", name.c_str()))
+            IS_NUMBER(it->value, "linux", string_format("%s.linux", name.c_str()))
 
-            offsets.insert({name, it.value()[WIN_LINUX("windows", "linux")].get<int>()});
+            offsets.insert({name, it->value[WIN_LINUX("windows", "linux")].GetInt()});
         }
     }
 
@@ -223,40 +223,40 @@ void GameData::LoadPatches(std::string game_folder)
         if(!ends_with(file, "patches.json")) continue;
 
         auto j = encoders::json::FromString(Files::Read(file), file);
-        if(!j.is_object()) {
+        if(!j.IsObject()) {
             PatchesError(string_format("'%s' needs to contain an object.\n", file.c_str()));
             continue;
         }
 
-        for(auto it = j.begin(); it != j.end(); ++it) {
-            std::string name = it.key();
+        for(auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
+            std::string name = it->name.GetString();
 
             if(patches.find(name) != patches.end()) {
                 PatchesError(string_format("The patch for '%s' has been already loaded.", name.c_str()));
                 continue;
             }
 
-            HAS_MEMBER(it.value(), "signature", string_format("%s.signature", name.c_str()));
-            HAS_MEMBER(it.value(), "windows", string_format("%s.windows", name.c_str()));
-            HAS_MEMBER(it.value(), "linux", string_format("%s.linux", name.c_str()));
+            HAS_MEMBER(it->value, "signature", string_format("%s.signature", name.c_str()));
+            HAS_MEMBER(it->value, "windows", string_format("%s.windows", name.c_str()));
+            HAS_MEMBER(it->value, "linux", string_format("%s.linux", name.c_str()));
 
-            IS_STRING(it.value(), "signature", string_format("%s.signature", name.c_str()));
-            IS_STRING(it.value(), "windows", string_format("%s.windows", name.c_str()));
-            IS_STRING(it.value(), "linux", string_format("%s.linux", name.c_str()));
+            IS_STRING(it->value, "signature", string_format("%s.signature", name.c_str()));
+            IS_STRING(it->value, "windows", string_format("%s.windows", name.c_str()));
+            IS_STRING(it->value, "linux", string_format("%s.linux", name.c_str()));
 
-            std::string signature = it.value()["signature"].get<std::string>();
+            std::string signature = it->value["signature"].GetString();
             if (!ExistsSignature(signature))
             {
                 PatchesError(string_format("%s: Signature '%s' does not exists in signatures file.\n", name.c_str(), signature.c_str()));
                 continue;
             }
 
-            patches.insert({name, std::string(it.value()[WIN_LINUX("windows", "linux")].get<std::string>())});
+            patches.insert({name, std::string(it->value[WIN_LINUX("windows", "linux")].GetString())});
             patches_signatures.insert({name, signature});
         }
     }
 
-    PatchesError(string_format("Succesfully loaded %02d patches.\n", offsets.size()));
+    PatchesError(string_format("Succesfully loaded %02d patches.\n", patches.size()));
 }
 
 void GameData::PerformPatch(std::string patch_name)

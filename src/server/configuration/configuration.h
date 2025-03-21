@@ -5,7 +5,7 @@
 #include <map>
 #include <any>
 
-#include <nlohmann/json.hpp>
+#include <rapidjson/json.hpp>
 
 class Configuration
 {

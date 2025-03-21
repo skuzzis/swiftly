@@ -4,7 +4,7 @@
 #include <filesystem/files/files.h>
 #include <memory/encoders/json.h>
 
-#include <nlohmann/json.hpp>
+#include <rapidjson/json.hpp>
 
 extern std::set<uint32_t> structCache;
 void PopulateClassData(const char* className, uint32_t classOffset);
@@ -19,30 +19,30 @@ void SDKAccess::LoadSDKData()
 
     std::string gamedata_path = string_format("addons/swiftly/gamedata/%s/", game_name.c_str());
     auto j = encoders::json::FromString(Files::Read(gamedata_path + "sdk.json"), gamedata_path + "sdk.json");
-    if(!j.is_object()) return;
+    if(!j.IsObject()) return;
 
-    for(auto it = j.begin(); it != j.end(); ++it)
+    for(auto it = j.MemberBegin(); it != j.MemberEnd(); ++it)
     {
-        std::string className = it.key();
+        std::string className = it->name.GetString();
         uint32_t classOffset = hash_32_fnv1a_const(className.c_str());
         PopulateClassData(className.c_str(), classOffset);
         classes.insert(className);
 
-        if (it.value().is_object()) {
-            for (auto it2 = it.value().begin(); it2 != it.value().end(); ++it2)
+        if (it->value.IsObject()) {
+            for (auto it2 = it->value.MemberBegin(); it2 != it->value.MemberEnd(); ++it2)
             {
-                std::string fieldName = it2.key();
+                std::string fieldName = it2->name.GetString();
 
-                if (it2.value().is_object()) {
-                    if (!it2.value().contains("field") || !it2.value().contains("type")) continue;
-                    if (!it2.value()["field"].is_string() || !it2.value()["type"].is_number_unsigned()) continue;
+                if (it2->value.IsObject()) {
+                    if (!it2->value.HasMember("field") || !it2->value.HasMember("type")) continue;
+                    if (!it2->value["field"].IsString() || !it2->value["type"].IsUint()) continue;
 
                     uint64_t key = ((uint64_t) hash_32_fnv1a_const(className.c_str()) << 32 | hash_32_fnv1a_const(fieldName.c_str()));
 
-                    fieldNames.insert({ key, it2.value()["field"].get<std::string>() });
-                    fieldTypes.insert({ key, (SDKFieldType_t)it2.value()["type"].get<uint32_t>() });
-                    if (it2.value().contains("size") && it2.value()["size"].is_number_unsigned()) fieldSizes.insert({ key, it2.value()["size"].get<uint32_t>() });
-                    if (it2.value().contains("classname") && it2.value()["classname"].is_string()) fieldClass.insert({ key, it2.value()["classname"].get<std::string>() });
+                    fieldNames.insert({ key, it2->value["field"].GetString() });
+                    fieldTypes.insert({ key, (SDKFieldType_t)(it2->value["type"].GetUint()) });
+                    if (it2->value.HasMember("size") && it2->value["size"].IsUint()) fieldSizes.insert({ key, it2->value["size"].GetUint() });
+                    if (it2->value.HasMember("classname") && it2->value["classname"].IsString()) fieldClass.insert({ key, it2->value["classname"].GetString() });
                 }
             }
         }
@@ -51,18 +51,18 @@ void SDKAccess::LoadSDKData()
     PRINTF("Succesfully loaded %lld SDK fields.\n", fieldNames.size());
 
     j = encoders::json::FromString(Files::Read(gamedata_path + "sdk_types.json"), gamedata_path + "sdk_types.json");
-    if(!j.is_object()) return;
+    if(!j.IsObject()) return;
 
-    for (auto it = j.begin(); it != j.end(); ++it)
+    for (auto it = j.MemberBegin(); it != j.MemberEnd(); ++it)
     {
-        std::string typeName = it.key();
+        std::string typeName = it->name.GetString();
         if(sdktypes.find(typeName) == sdktypes.end()) sdktypes.insert({typeName, {}});
 
-        if (it.value().is_object()) {
-            for (auto it2 = it.value().begin(); it2 != it.value().end(); ++it2)
+        if (it->value.IsObject()) {
+            for (auto it2 = it->value.MemberBegin(); it2 != it->value.MemberEnd(); ++it2)
             {
-                std::string fieldName = it2.key();
-                int64_t value = it2.value().get<uint64_t>();
+                std::string fieldName = it2->name.GetString();
+                int64_t value = it2->value.GetInt64();
                 sdktypes[typeName].insert({fieldName, value});
             }
         }
