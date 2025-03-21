@@ -138,7 +138,7 @@ void GameData::LoadSignatures(std::string game_folder)
             signatures.insert({name, sig});
         }
     }
-    SignaturesError(string_format("Succesfully loaded %02d signatures.\n", signatures.size()));
+    SignaturesError(string_format("Succesfully loaded %02d signatures.", signatures.size()));
 }
 
 void GameData::LoadOffsets(std::string game_folder)
@@ -171,7 +171,7 @@ void GameData::LoadOffsets(std::string game_folder)
         }
     }
 
-    OffsetsError(string_format("Succesfully loaded %02d offsets.\n", offsets.size()));
+    OffsetsError(string_format("Succesfully loaded %02d offsets.", offsets.size()));
 }
 
 int GameData::GetOffset(std::string name)
@@ -256,7 +256,7 @@ void GameData::LoadPatches(std::string game_folder)
         }
     }
 
-    PatchesError(string_format("Succesfully loaded %02d patches.\n", patches.size()));
+    PatchesError(string_format("Succesfully loaded %02d patches.", patches.size()));
 }
 
 void GameData::PerformPatch(std::string patch_name)

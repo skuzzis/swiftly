@@ -1,5 +1,5 @@
 # vim: set sts=2 ts=8 sw=2 tw=99 et ft=python: 
-import os, fnmatch
+import os, fnmatch, json
 
 MMSPlugin.plugin_name = 'swiftly'
 MMSPlugin.plugin_alias = 'swiftly'
@@ -9,6 +9,21 @@ for sdk_target in MMSPlugin.sdk_targets:
   cxx = sdk_target.cxx
 
   binary = MMSPlugin.HL2Library(builder, cxx, MMSPlugin.plugin_name, sdk)
+
+  for root, dirs, files in os.walk(os.path.join(builder.sourcePath, "vendor", "embedder", "src")):
+	  for _file in files:
+		  if fnmatch.fnmatch(_file, '*.cpp'):
+			  binary.sources.append(os.path.join(root, _file).replace("\\", "/"))\
+
+  with open(os.path.join(builder.sourcePath, "vendor", "embedder", "libs", "links.json")) as f:
+	  embedder_linking = json.load(f)
+
+  libs = embedder_linking["libraries"][binary.compiler.target.platform]
+  incls = embedder_linking["includes"]
+  for lib in libs:
+    binary.compiler.postlink += [os.path.join(builder.sourcePath, "vendor", "embedder", "libs", lib)]
+  for incl in incls:
+    binary.compiler.cxxincludes += [os.path.join(builder.sourcePath, 'vendor', 'embedder', 'libs', incl)]
 
   binary.sources += [
     'src/core/entrypoint.cpp',
