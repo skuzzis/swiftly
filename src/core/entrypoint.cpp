@@ -16,6 +16,8 @@
 
 #include <memory/gamedata/gamedata.h>
 
+#include <plugins/manager.h>
+
 #include <sdk/access.h>
 #include <sdk/game.h>
 
@@ -52,6 +54,7 @@ Logger g_Logger;
 Translations g_translations;
 GameData g_GameData;
 SDKAccess g_sdk;
+PluginsManager g_pluginManager;
 
 //////////////////////////////////////////////////////////////
 /////////////////          Core Class          //////////////
@@ -93,6 +96,9 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
 
     g_translations.LoadTranslations();
 
+    g_pluginManager.LoadPlugins("");
+    g_pluginManager.StartPlugins();
+
     PRINT("Succesfully started.\n");
 
     return true;
@@ -100,6 +106,8 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
 
 bool SwiftlyS2::Unload(char *error, size_t maxlen)
 {
+    g_pluginManager.StopPlugins(false);
+    g_pluginManager.UnloadPlugins();
     return true;
 }
 
