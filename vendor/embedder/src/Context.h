@@ -10,11 +10,14 @@
 
 #include "ContextKinds.h"
 
+class EValue;
+
 class EContext
 {
 private:
     void* m_state;
     ContextKinds m_kind;
+    std::set<EValue*> mappedValues;
 
     std::map<std::string, JSClassID> classIDs;
 public:
@@ -31,6 +34,9 @@ public:
 
     int RunCode(std::string code);
     int RunFile(std::string path);
+
+    void PushValue(EValue* val);
+    void PopValue(EValue* val);
 
     JSClassID* GetClassID(std::string className);
     std::string GetClsName(JSClassID id);

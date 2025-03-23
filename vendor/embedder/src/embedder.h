@@ -2,5 +2,6 @@
 #define _src_embedder
 
 #include "Context.h"
+#include "Value.h"
 
 #endif
