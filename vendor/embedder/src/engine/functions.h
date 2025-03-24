@@ -14,8 +14,12 @@ private:
     JSValue returnVal = JS_UNDEFINED;
     bool stopExecution = false;
 
+    JSValue* m_vals;
+    int m_argc;
+
 public:
     FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx);
+    FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue* vals, int argc);
     ~FunctionContext();
 
     bool HasResult();
@@ -47,7 +51,8 @@ public:
         }
         else if (m_kind == ContextKinds::JavaScript)
         {
-            return *(T *)0;
+            if(index < 0 || index >= m_argc) return *(T*)0;
+            return Stack<T>::getJS(m_ctx, m_vals[index]);
         }
     }
 
@@ -63,7 +68,8 @@ public:
         }
         else if (m_kind == ContextKinds::JavaScript)
         {
-            return defaultVal;
+            if(index < 0 || index >= m_argc) return defaultVal;
+            return Stack<T>::getJS(m_ctx, m_vals[index]);
         }
     }
 

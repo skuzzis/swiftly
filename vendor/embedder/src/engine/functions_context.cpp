@@ -7,6 +7,15 @@ FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EC
     m_ctx = ctx;
 }
 
+FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue* vals, int argc)
+{
+    m_function_key = function_key;
+    m_kind = kind;
+    m_ctx = ctx;
+    m_vals = vals;
+    m_argc = argc;
+}
+
 FunctionContext::~FunctionContext()
 {
     if (returnRef != LUA_NOREF)
