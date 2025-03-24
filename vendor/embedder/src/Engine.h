@@ -51,10 +51,19 @@ void AddScriptingVariables(EContext *ctx, std::string namespace_path, std::map<s
     AddScriptingFunctionPre(ctx, ns_path, function_name, callback)
 #define ADD_FUNCTION_NS_CTX_PRE(ctx, ns_path, function_name, callback) \
     AddScriptingFunctionPre(ctx, ns_path, function_name, callback)
+#define ADD_FUNCTION_POST(function_name, callback) \
+    AddScriptingFunctionPost(ctx, "_G", function_name, callback)
+#define ADD_FUNCTION_CTX_POST(ctx, function_name, callback) \
+    AddScriptingFunctionPost(ctx, "_G", function_name, callback)
+#define ADD_FUNCTION_NS_POST(ns_path, function_name, callback) \
+    AddScriptingFunctionPost(ctx, ns_path, function_name, callback)
+#define ADD_FUNCTION_NS_CTX_POST(ctx, ns_path, function_name, callback) \
+    AddScriptingFunctionPost(ctx, ns_path, function_name, callback)
 
 typedef void (*ScriptingFunctionCallback)(FunctionContext *);
 
 void AddScriptingFunction(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
 void AddScriptingFunctionPre(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
+void AddScriptingFunctionPost(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
 
 #endif

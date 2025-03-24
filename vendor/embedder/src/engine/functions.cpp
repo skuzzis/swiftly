@@ -18,6 +18,7 @@ int LuaFunctionCallback(lua_State *L)
     FunctionContext *fptr = &fctx;
 
     auto functionPreCalls = ctx->GetFunctionPreCalls();
+    auto functionPostCalls = ctx->GetFunctionPostCalls();
     bool stopExecution = false;
 
     for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
@@ -40,6 +41,22 @@ int LuaFunctionCallback(lua_State *L)
         goto functioncbend;
 
     cb(fptr);
+
+    for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
+        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+        {
+            for (void *func : it->second)
+            {
+                reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
+                if (fctx.ShouldStopExecution())
+                {
+                    stopExecution = true;
+                    break;
+                }
+            }
+            if (stopExecution)
+                break;
+        }
 
 functioncbend:
     int hasResult = (int)fctx.HasResult();
@@ -121,6 +138,18 @@ void AddScriptingFunctionPre(EContext *ctx, std::string namespace_path, std::str
     {
         auto func_key = namespace_path + " " + function_name;
         ctx->AddFunctionPreCall(func_key, reinterpret_cast<void *>(callback));
+    }
+    else if (ctx->GetKind() == ContextKinds::JavaScript)
+    {
+    }
+}
+
+void AddScriptingFunctionPost(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback)
+{
+    if (ctx->GetKind() == ContextKinds::Lua)
+    {
+        auto func_key = namespace_path + " " + function_name;
+        ctx->AddFunctionPostCall(func_key, reinterpret_cast<void *>(callback));
     }
     else if (ctx->GetKind() == ContextKinds::JavaScript)
     {

@@ -241,6 +241,19 @@ std::map<std::string, std::vector<void *>> EContext::GetFunctionPreCalls()
     return functionPreCalls;
 }
 
+void EContext::AddFunctionPostCall(std::string key, void *val)
+{
+    if (functionPostCalls.find(key) == functionPostCalls.end())
+        functionPostCalls.insert({key, {}});
+
+    functionPostCalls[key].push_back(val);
+}
+
+std::map<std::string, std::vector<void *>> EContext::GetFunctionPostCalls()
+{
+    return functionPostCalls;
+}
+
 EContext *GetContextByState(JSContext *ctx)
 {
     return (EContext *)JS_GetContextOpaque(ctx);

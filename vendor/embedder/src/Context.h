@@ -23,6 +23,7 @@ private:
     std::map<std::string, JSClassID> classIDs;
     std::map<std::string, void *> functionCalls;
     std::map<std::string, std::vector<void *>> functionPreCalls;
+    std::map<std::string, std::vector<void *>> functionPostCalls;
 
 public:
     EContext(ContextKinds kind);
@@ -50,6 +51,9 @@ public:
 
     void AddFunctionPreCall(std::string key, void *val);
     std::map<std::string, std::vector<void *>> GetFunctionPreCalls();
+
+    void AddFunctionPostCall(std::string key, void *val);
+    std::map<std::string, std::vector<void *>> GetFunctionPostCalls();
 };
 
 EContext *GetContextByState(JSContext *ctx);
