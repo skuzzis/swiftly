@@ -90,13 +90,6 @@ bool PluginObject::LoadScriptingEnvironment()
 
     std::string fileExt = GetKind() == ContextKinds::Lua ? ".lua" : ".js";
 
-    ADD_FUNCTION("GetCurrentPluginName", [](FunctionContext *context) -> void
-                 {
-        printf("Called in C++ the GetCurrentPluginName function.\n");
-        printf("Argument #1: %s\n", context->GetArgument<std::string>(0).c_str());
-        printf("Argument #2: %d\n", context->GetArgument<std::vector<int>>(1).size());
-        context->SetReturn(55555); });
-
     std::vector<std::string> scriptingFiles = Files::FetchFileNames("addons/swiftly/bin/scripting");
     for (std::string file : scriptingFiles)
     {
