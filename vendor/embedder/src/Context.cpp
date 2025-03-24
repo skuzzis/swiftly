@@ -19,43 +19,47 @@ static const luaL_Reg lualibs[] = {
     {NULL, NULL},
 };
 
-JSRuntime* rt = nullptr;
+JSRuntime *rt = nullptr;
 
 EContext::EContext(ContextKinds kind)
 {
     m_kind = kind;
 
-    if(kind == ContextKinds::Lua) {
+    if (kind == ContextKinds::Lua)
+    {
         auto state = luaL_newstate();
-        m_state = (void*)state;
+        m_state = (void *)state;
 
-        const luaL_Reg* lib = lualibs;
-        for (; lib->func; lib++) RegisterLuaLib(lib->name, lib->func);
+        const luaL_Reg *lib = lualibs;
+        for (; lib->func; lib++)
+            RegisterLuaLib(lib->name, lib->func);
 
-        lua_pushglobaltable(state); // _G
-        lua_pushlightuserdata(state, (void*)this); // _G, ud
-        lua_rawsetp(state, -2, getContextKey()); // _G[key] = ud. _G
-        lua_pop(state, 1); // empty
-    } else if(kind == ContextKinds::JavaScript) {
-        if(rt == nullptr) {
+        lua_pushglobaltable(state);                 // _G
+        lua_pushlightuserdata(state, (void *)this); // _G, ud
+        lua_rawsetp(state, -2, getContextKey());    // _G[key] = ud. _G
+        lua_pop(state, 1);                          // empty
+    }
+    else if (kind == ContextKinds::JavaScript)
+    {
+        if (rt == nullptr)
+        {
             rt = JS_NewRuntime();
             JS_SetMaxStackSize(rt, 0);
         }
-        JSContext* ctx = JS_NewContext(rt);
-
+        JSContext *ctx = JS_NewContext(rt);
 
         JSValue global_obj = JS_GetGlobalObject(ctx);
         JSValue console_obj = JS_NewObject(ctx);
 
         JS_SetPropertyStr(ctx, console_obj, "log",
-            JS_NewCFunction(ctx, CHelpers::js_print_to_console, "log", 1));
+                          JS_NewCFunction(ctx, CHelpers::js_print_to_console, "log", 1));
         JS_SetPropertyStr(ctx, global_obj, "console", console_obj);
 
         JS_FreeValue(ctx, global_obj);
 
-        JS_SetContextOpaque(ctx, (void*)this);
+        JS_SetContextOpaque(ctx, (void *)this);
 
-        m_state = (void*)ctx;
+        m_state = (void *)ctx;
     }
 
     EException::Enable(m_state, m_kind);
@@ -63,15 +67,18 @@ EContext::EContext(ContextKinds kind)
 
 EContext::~EContext()
 {
-    for(auto it = mappedValues.begin(); it != mappedValues.end(); ++it)
+    for (auto it = mappedValues.begin(); it != mappedValues.end(); ++it)
         delete (*it);
 
     mappedValues.clear();
-    
-    if(m_kind == ContextKinds::Lua) {
-        lua_close((lua_State*)m_state);
-    } else if(m_kind == ContextKinds::JavaScript) {
-        JSContext* ctx = (JSContext*)m_state;
+
+    if (m_kind == ContextKinds::Lua)
+    {
+        lua_close((lua_State *)m_state);
+    }
+    else if (m_kind == ContextKinds::JavaScript)
+    {
+        JSContext *ctx = (JSContext *)m_state;
         JS_FreeContext(ctx);
     }
 }
@@ -81,38 +88,49 @@ ContextKinds EContext::GetKind()
     return m_kind;
 }
 
-void EContext::RegisterLuaLib(const char* libName, lua_CFunction func)
+void EContext::RegisterLuaLib(const char *libName, lua_CFunction func)
 {
-    luaL_requiref((lua_State*)m_state, libName, func, 1);
-    lua_pop((lua_State*)m_state, 1);
+    luaL_requiref((lua_State *)m_state, libName, func, 1);
+    lua_pop((lua_State *)m_state, 1);
 }
 
 int64_t EContext::GetMemoryUsage()
 {
-    if(m_kind == ContextKinds::Lua) {
-        int64_t count = lua_gc((lua_State*)m_state, LUA_GCCOUNT, 0);
+    if (m_kind == ContextKinds::Lua)
+    {
+        int64_t count = lua_gc((lua_State *)m_state, LUA_GCCOUNT, 0);
         count *= 1024;
-        count += lua_gc((lua_State*)m_state, LUA_GCCOUNTB, 0);
+        count += lua_gc((lua_State *)m_state, LUA_GCCOUNTB, 0);
         return count;
-    } else if(m_kind == ContextKinds::JavaScript) {
+    }
+    else if (m_kind == ContextKinds::JavaScript)
+    {
         JSMemoryUsage stats;
-        JS_ComputeMemoryUsage(JS_GetRuntime((JSContext*)m_state), &stats);
+        JS_ComputeMemoryUsage(JS_GetRuntime((JSContext *)m_state), &stats);
         return stats.memory_used_size;
-    } else return 0;
+    }
+    else
+        return 0;
 }
 
 int EContext::RunCode(std::string code)
 {
-    if(m_kind == ContextKinds::Lua) {
-        int cd = (luaL_dostring((lua_State*)m_state, code.c_str()));
-        if(cd != 0) EException::Throw(EException(GetState(), GetKind(), cd));
+    if (m_kind == ContextKinds::Lua)
+    {
+        int cd = (luaL_dostring((lua_State *)m_state, code.c_str()));
+        if (cd != 0)
+            EException::Throw(EException(GetState(), GetKind(), cd));
         return cd;
-    } else if(m_kind == ContextKinds::JavaScript) {
-        auto res = JS_Eval((JSContext*)m_state, code.c_str(), code.length(), "runcode.js", JS_EVAL_TYPE_GLOBAL);
+    }
+    else if (m_kind == ContextKinds::JavaScript)
+    {
+        auto res = JS_Eval((JSContext *)m_state, code.c_str(), code.length(), "runcode.js", JS_EVAL_TYPE_GLOBAL);
         bool isException = JS_IsException(res);
-        JS_FreeValue((JSContext*)m_state, res);
+        JS_FreeValue((JSContext *)m_state, res);
         return (int)isException;
-    } else return 0;
+    }
+    else
+        return 0;
 }
 
 std::string files_Read(std::string path)
@@ -133,85 +151,106 @@ std::string files_Read(std::string path)
 
 int EContext::RunFile(std::string path)
 {
-    if(m_kind == ContextKinds::Lua) {
-        int cd = (luaL_dofile((lua_State*)m_state, path.c_str()));
-        if(cd != 0) EException::Throw(EException(GetState(), GetKind(), cd));
+    if (m_kind == ContextKinds::Lua)
+    {
+        int cd = (luaL_dofile((lua_State *)m_state, path.c_str()));
+        if (cd != 0)
+            EException::Throw(EException(GetState(), GetKind(), cd));
         return cd;
-    } else if(m_kind == ContextKinds::JavaScript) {
+    }
+    else if (m_kind == ContextKinds::JavaScript)
+    {
         std::string code = files_Read(path);
-        auto res = JS_Eval((JSContext*)m_state, code.c_str(), code.length(), path.c_str(), JS_EVAL_TYPE_GLOBAL);
+        auto res = JS_Eval((JSContext *)m_state, code.c_str(), code.length(), path.c_str(), JS_EVAL_TYPE_GLOBAL);
         bool isException = JS_IsException(res);
-        JS_FreeValue((JSContext*)m_state, res);
+        JS_FreeValue((JSContext *)m_state, res);
         return (int)isException;
-    } else return 0;
+    }
+    else
+        return 0;
 }
 
-void EContext::PushValue(EValue* val)
+void EContext::PushValue(EValue *val)
 {
-    if(mappedValues.find(val) != mappedValues.end()) return;
+    if (mappedValues.find(val) != mappedValues.end())
+        return;
     mappedValues.insert(val);
 }
 
-void EContext::PopValue(EValue* val)
+void EContext::PopValue(EValue *val)
 {
-    if(mappedValues.find(val) == mappedValues.end()) return;
+    if (mappedValues.find(val) == mappedValues.end())
+        return;
     mappedValues.erase(val);
 }
 
-void* EContext::GetState()
+void *EContext::GetState()
 {
     return m_state;
 }
 
-lua_State* EContext::GetLuaState()
+lua_State *EContext::GetLuaState()
 {
-    return (lua_State*)m_state;
+    return (lua_State *)m_state;
 }
 
-JSContext* EContext::GetJSState()
+JSContext *EContext::GetJSState()
 {
-    return (JSContext*)m_state;
+    return (JSContext *)m_state;
 }
 
-
-JSClassID* EContext::GetClassID(std::string className)
+JSClassID *EContext::GetClassID(std::string className)
 {
-    if(classIDs.find(className) == classIDs.end())
-        classIDs.insert({ className, 0 });
+    if (classIDs.find(className) == classIDs.end())
+        classIDs.insert({className, 0});
 
     return &classIDs[className];
 }
 
 std::string EContext::GetClsName(JSClassID id)
 {
-    for(auto it = classIDs.begin(); it != classIDs.end(); ++it)
-        if(it->second == id)
+    for (auto it = classIDs.begin(); it != classIDs.end(); ++it)
+        if (it->second == id)
             return it->first;
 
     return "";
 }
 
-void EContext::AddFunctionCall(std::string key, void* val)
+void EContext::AddFunctionCall(std::string key, void *val)
 {
     functionCalls.insert({key, val});
 }
 
-void* EContext::GetFunctionCall(std::string key)
+void *EContext::GetFunctionCall(std::string key)
 {
-    if(functionCalls.find(key) == functionCalls.end()) return nullptr;
+    if (functionCalls.find(key) == functionCalls.end())
+        return nullptr;
     return functionCalls[key];
 }
 
-EContext* GetContextByState(JSContext* ctx)
+void EContext::AddFunctionPreCall(std::string key, void *val)
 {
-    return (EContext*)JS_GetContextOpaque(ctx);
+    if (functionPreCalls.find(key) == functionPreCalls.end())
+        functionPreCalls.insert({key, {}});
+
+    functionPreCalls[key].push_back(val);
 }
 
-EContext* GetContextByState(lua_State* ctx)
+std::map<std::string, std::vector<void *>> EContext::GetFunctionPreCalls()
+{
+    return functionPreCalls;
+}
+
+EContext *GetContextByState(JSContext *ctx)
+{
+    return (EContext *)JS_GetContextOpaque(ctx);
+}
+
+EContext *GetContextByState(lua_State *ctx)
 {
     lua_pushglobaltable(ctx);
     lua_rawgetp(ctx, -1, getContextKey());
     auto ud = lua_touserdata(ctx, -1);
     lua_pop(ctx, 2);
-    return (EContext*)ud;
+    return (EContext *)ud;
 }

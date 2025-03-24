@@ -2,6 +2,8 @@
 #include "../CHelpers.h"
 #include "../Helpers.h"
 
+#include <regex>
+
 int LuaFunctionCallback(lua_State *L)
 {
     std::string str_key = lua_tostring(L, lua_upvalueindex(1));
@@ -13,8 +15,31 @@ int LuaFunctionCallback(lua_State *L)
 
     ScriptingFunctionCallback cb = reinterpret_cast<ScriptingFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx);
+    FunctionContext *fptr = &fctx;
 
-    cb(&fctx);
+    auto functionPreCalls = ctx->GetFunctionPreCalls();
+    bool stopExecution = false;
+
+    for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
+        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+        {
+            for (void *func : it->second)
+            {
+                reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
+                if (fctx.ShouldStopExecution())
+                {
+                    stopExecution = true;
+                    break;
+                }
+            }
+            if (stopExecution)
+                break;
+        }
+
+    if (stopExecution)
+        goto functioncbend;
+
+    cb(fptr);
 
 functioncbend:
     int hasResult = (int)fctx.HasResult();
@@ -84,6 +109,18 @@ void AddScriptingFunction(EContext *ctx, std::string namespace_path, std::string
         rawsetfield(L, -2, function_name.c_str());
 
         lua_pop(L, pop_values);
+    }
+    else if (ctx->GetKind() == ContextKinds::JavaScript)
+    {
+    }
+}
+
+void AddScriptingFunctionPre(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback)
+{
+    if (ctx->GetKind() == ContextKinds::Lua)
+    {
+        auto func_key = namespace_path + " " + function_name;
+        ctx->AddFunctionPreCall(func_key, reinterpret_cast<void *>(callback));
     }
     else if (ctx->GetKind() == ContextKinds::JavaScript)
     {

@@ -17,3 +17,13 @@ bool FunctionContext::HasResult()
 {
     return (returnRef != LUA_NOREF || !JS_IsUndefined(returnVal));
 }
+
+void FunctionContext::StopExecution()
+{
+    stopExecution = true;
+}
+
+bool FunctionContext::ShouldStopExecution()
+{
+    return stopExecution;
+}

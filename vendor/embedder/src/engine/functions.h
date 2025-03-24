@@ -12,12 +12,16 @@ private:
 
     int returnRef = LUA_NOREF;
     JSValue returnVal = JS_UNDEFINED;
+    bool stopExecution = false;
 
 public:
     FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx);
     ~FunctionContext();
 
     bool HasResult();
+
+    void StopExecution();
+    bool ShouldStopExecution();
 
     void pushLuaResult()
     {
