@@ -110,6 +110,8 @@ public:
             return Stack<T>::getJS(m_ctx, returnVal);
         }
     }
+
+    int GetArgumentsCount();
 };
 
 #endif

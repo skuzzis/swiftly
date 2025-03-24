@@ -36,3 +36,12 @@ bool FunctionContext::ShouldStopExecution()
 {
     return stopExecution;
 }
+
+int FunctionContext::GetArgumentsCount()
+{
+    if(m_kind == ContextKinds::Lua) {
+        return lua_gettop(m_ctx->GetLuaState());
+    } else if(m_kind == ContextKinds::JavaScript) {
+        return m_argc;
+    } else return 0;
+}
