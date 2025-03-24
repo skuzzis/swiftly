@@ -20,6 +20,7 @@ private:
     std::set<EValue*> mappedValues;
 
     std::map<std::string, JSClassID> classIDs;
+    std::map<std::string, void*> functionCalls;
 public:
     EContext(ContextKinds kind);
     ~EContext();
@@ -40,6 +41,9 @@ public:
 
     JSClassID* GetClassID(std::string className);
     std::string GetClsName(JSClassID id);
+
+    void AddFunctionCall(std::string key, void* val);
+    void* GetFunctionCall(std::string key);
 };
 
 

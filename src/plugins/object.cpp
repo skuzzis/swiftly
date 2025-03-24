@@ -11,7 +11,8 @@ PluginObject::PluginObject(std::string m_name, ContextKinds m_kind)
     kind = m_kind;
 }
 
-PluginObject::~PluginObject() {
+PluginObject::~PluginObject()
+{
 }
 
 std::string PluginObject::GetName()
@@ -41,7 +42,8 @@ void PluginObject::SetLoadError(std::string error)
 
 int64_t PluginObject::GetMemoryUsage()
 {
-    if (GetPluginState() == PluginState_t::Stopped) return 0;
+    if (GetPluginState() == PluginState_t::Stopped)
+        return 0;
     return ctx->GetMemoryUsage();
 }
 
@@ -88,12 +90,20 @@ bool PluginObject::LoadScriptingEnvironment()
 
     std::string fileExt = GetKind() == ContextKinds::Lua ? ".lua" : ".js";
 
+    ADD_FUNCTION("GetCurrentPluginName", [](FunctionContext *context) -> void
+                 {
+        printf("Called in C++ the GetCurrentPluginName function.\n");
+        printf("Argument #1: %s\n", context->GetArgument<std::string>(0).c_str());
+        printf("Argument #2: %d\n", context->GetArgument<std::vector<int>>(1).size());
+        context->SetReturn(55555); });
+
     std::vector<std::string> scriptingFiles = Files::FetchFileNames("addons/swiftly/bin/scripting");
     for (std::string file : scriptingFiles)
     {
         if (ends_with(file, fileExt))
         {
-            try {
+            try
+            {
                 int loadStatus = ctx->RunFile(GeneratePath(file));
 
                 if (loadStatus != 0)
@@ -106,7 +116,8 @@ bool PluginObject::LoadScriptingEnvironment()
                     return false;
                 }
             }
-            catch (EException& e) {
+            catch (EException &e)
+            {
                 std::string error = e.what();
                 PRINTF("Failed to load plugin file '%s'.\n", file.c_str());
                 PRINTF("Error: %s\n", error.c_str());
@@ -122,7 +133,8 @@ bool PluginObject::LoadScriptingEnvironment()
     {
         if (ends_with(file, fileExt))
         {
-            try {
+            try
+            {
                 int loadStatus = ctx->RunFile(GeneratePath(file));
 
                 if (loadStatus != 0)
@@ -135,7 +147,8 @@ bool PluginObject::LoadScriptingEnvironment()
                     return false;
                 }
             }
-            catch (EException& e) {
+            catch (EException &e)
+            {
                 std::string error = e.what();
                 PRINTF("Failed to load plugin file '%s'.\n", file.c_str());
                 PRINTF("Error: %s\n", error.c_str());
@@ -197,7 +210,8 @@ bool PluginObject::ExecuteStart()
     // TriggerEvent("core", "OnPluginStart", encoders::msgpack::SerializeToString({}), event);
     // delete event;
 
-    if (GetLoadError() != "") return false;
+    if (GetLoadError() != "")
+        return false;
 
     return true;
 }
@@ -226,7 +240,7 @@ ContextKinds PluginObject::GetKind()
     return kind;
 }
 
-EContext* PluginObject::GetContext()
+EContext *PluginObject::GetContext()
 {
     return ctx;
 }

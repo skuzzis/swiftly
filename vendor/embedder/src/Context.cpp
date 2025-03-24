@@ -191,6 +191,17 @@ std::string EContext::GetClsName(JSClassID id)
     return "";
 }
 
+void EContext::AddFunctionCall(std::string key, void* val)
+{
+    functionCalls.insert({key, val});
+}
+
+void* EContext::GetFunctionCall(std::string key)
+{
+    if(functionCalls.find(key) == functionCalls.end()) return nullptr;
+    return functionCalls[key];
+}
+
 EContext* GetContextByState(JSContext* ctx)
 {
     return (EContext*)JS_GetContextOpaque(ctx);
