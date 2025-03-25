@@ -121,7 +121,7 @@ JSValue JSClassCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv,
         MarkDeleteOnGC(data);
 
         JSClassID &id = *(ctx->GetClassID(splits[0]));
-        auto proto = JS_GetClassProto(L, id);
+        auto proto = ctx->GetClassPrototype(splits[0]);
         ret = JS_NewObjectProtoClass(L, proto, id);
         JS_FreeValue(L, proto);
 
@@ -268,12 +268,10 @@ void AddScriptingClassFunction(EContext *ctx, std::string class_name, std::strin
         }
         else
         {
-            auto proto = JS_GetClassProto(L, *ctx->GetClassID(class_name));
+            auto proto = ctx->GetClassPrototype(class_name);
 
             std::vector<JSValue> vals = {Stack<std::string>::pushJS(ctx, func_key)};
             JS_SetPropertyStr(L, proto, function_name.c_str(), JS_NewCFunctionData(L, JSClassCallback, 0, 1, 1, vals.data()));
-
-            JS_FreeValue(L, proto);
         }
     }
 }
@@ -318,7 +316,7 @@ EValue CreateScriptingClassInstance(EContext *context, std::string class_name, s
         MarkDeleteOnGC(data);
 
         JSClassID &id = *(context->GetClassID(class_name));
-        auto proto = JS_GetClassProto(L, id);
+        auto proto = context->GetClassPrototype(class_name);
         auto ret = JS_NewObjectProtoClass(L, proto, id);
         JS_FreeValue(L, proto);
 

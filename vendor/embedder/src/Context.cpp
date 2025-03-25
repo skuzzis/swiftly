@@ -254,18 +254,19 @@ std::map<std::string, std::vector<void *>> EContext::GetFunctionPostCalls()
     return functionPostCalls;
 }
 
-void EContext::AddClassFunctionCalls(std::string key, void* val)
+void EContext::AddClassFunctionCalls(std::string key, void *val)
 {
     classFunctionCalls.insert_or_assign(key, val);
 }
 
 void *EContext::GetClassFunctionCall(std::string key)
 {
-    if(classFunctionCalls.find(key) == classFunctionCalls.end()) return nullptr;
+    if (classFunctionCalls.find(key) == classFunctionCalls.end())
+        return nullptr;
     return classFunctionCalls[key];
 }
 
-void EContext::AddClassFunctionPreCalls(std::string key, void* val)
+void EContext::AddClassFunctionPreCalls(std::string key, void *val)
 {
     if (classFunctionPreCalls.find(key) == classFunctionPreCalls.end())
         classFunctionPreCalls.insert({key, {}});
@@ -278,7 +279,7 @@ std::map<std::string, std::vector<void *>> EContext::GetClassFunctionPreCalls()
     return classFunctionPreCalls;
 }
 
-void EContext::AddClassFunctionPostCalls(std::string key, void* val)
+void EContext::AddClassFunctionPostCalls(std::string key, void *val)
 {
     if (classFunctionPostCalls.find(key) == classFunctionPostCalls.end())
         classFunctionPostCalls.insert({key, {}});
@@ -289,6 +290,14 @@ void EContext::AddClassFunctionPostCalls(std::string key, void* val)
 std::map<std::string, std::vector<void *>> EContext::GetClassFunctionPostCalls()
 {
     return classFunctionPostCalls;
+}
+
+JSValue &EContext::GetClassPrototype(std::string className)
+{
+    if (classPrototypes.find(className) == classPrototypes.end())
+        classPrototypes.insert({className, JS_NewObject(GetJSState())});
+
+    return classPrototypes[className];
 }
 
 EContext *GetContextByState(JSContext *ctx)

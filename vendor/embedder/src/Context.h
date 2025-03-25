@@ -21,13 +21,15 @@ private:
     std::set<EValue *> mappedValues;
 
     std::map<std::string, JSClassID> classIDs;
+    std::map<std::string, JSValue> classPrototypes;
+
     std::map<std::string, void *> functionCalls;
     std::map<std::string, std::vector<void *>> functionPreCalls;
     std::map<std::string, std::vector<void *>> functionPostCalls;
 
-    std::map<std::string, void*> classFunctionCalls;
-    std::map<std::string, std::vector<void*>> classFunctionPreCalls;
-    std::map<std::string, std::vector<void*>> classFunctionPostCalls;
+    std::map<std::string, void *> classFunctionCalls;
+    std::map<std::string, std::vector<void *>> classFunctionPreCalls;
+    std::map<std::string, std::vector<void *>> classFunctionPostCalls;
 
 public:
     EContext(ContextKinds kind);
@@ -40,6 +42,8 @@ public:
     void *GetState();
     lua_State *GetLuaState();
     JSContext *GetJSState();
+
+    JSValue &GetClassPrototype(std::string className);
 
     int RunCode(std::string code);
     int RunFile(std::string path);
@@ -59,13 +63,13 @@ public:
     void AddFunctionPostCall(std::string key, void *val);
     std::map<std::string, std::vector<void *>> GetFunctionPostCalls();
 
-    void AddClassFunctionCalls(std::string key, void* val);
+    void AddClassFunctionCalls(std::string key, void *val);
     void *GetClassFunctionCall(std::string key);
-    
-    void AddClassFunctionPreCalls(std::string key, void* val);
+
+    void AddClassFunctionPreCalls(std::string key, void *val);
     std::map<std::string, std::vector<void *>> GetClassFunctionPreCalls();
-    
-    void AddClassFunctionPostCalls(std::string key, void* val);
+
+    void AddClassFunctionPostCalls(std::string key, void *val);
     std::map<std::string, std::vector<void *>> GetClassFunctionPostCalls();
 };
 
