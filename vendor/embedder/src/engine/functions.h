@@ -15,15 +15,16 @@ private:
     JSValue returnVal = JS_UNDEFINED;
     bool stopExecution = false;
 
-    JSValue* m_vals;
+    JSValue *m_vals;
     int m_argc;
 
 public:
     FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, bool shouldSkipFirstArgument = false);
-    FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue* vals, int argc);
+    FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue *vals, int argc);
     ~FunctionContext();
 
     bool HasResult();
+    EContext *GetPluginContext();
 
     void StopExecution();
     bool ShouldStopExecution();
@@ -52,10 +53,12 @@ public:
         }
         else if (m_kind == ContextKinds::JavaScript)
         {
-            if(index < 0 || index >= m_argc) return *(T*)0;
+            if (index < 0 || index >= m_argc)
+                return *(T *)0;
             return Stack<T>::getJS(m_ctx, m_vals[index]);
         }
-        else return *(T *)0;
+        else
+            return *(T *)0;
     }
 
     template <class T>
@@ -70,10 +73,12 @@ public:
         }
         else if (m_kind == ContextKinds::JavaScript)
         {
-            if(index < 0 || index >= m_argc) return defaultVal;
+            if (index < 0 || index >= m_argc)
+                return defaultVal;
             return Stack<T>::getJS(m_ctx, m_vals[index]);
         }
-        else return defaultVal;
+        else
+            return defaultVal;
     }
 
     template <class T>
@@ -112,7 +117,8 @@ public:
 
             return Stack<T>::getJS(m_ctx, returnVal);
         }
-        else return *(T *)0;
+        else
+            return *(T *)0;
     }
 
     int GetArgumentsCount();

@@ -9,7 +9,39 @@ class ClassData
 {
 private:
     std::map<std::string, std::any> m_classData;
+
 public:
+    ClassData(std::map<std::string, std::any> data);
+
+    void SetData(std::string key, std::any value);
+
+    template <class T>
+    T GetData(std::string key)
+    {
+        try
+        {
+            return std::any_cast<T>(m_classData[key]);
+        }
+        catch (std::bad_any_cast &e)
+        {
+            printf("[Embedder] Invalid cast: %s\n", e.what());
+            return *(T *)0;
+        }
+    }
+
+    template <class T>
+    T GetDataOr(std::string key, T value)
+    {
+        try
+        {
+            return std::any_cast<T>(m_classData[key]);
+        }
+        catch (std::bad_any_cast &e)
+        {
+            printf("[Embedder] Invalid cast: %s\n", e.what());
+            return value;
+        }
+    }
 };
 
 #endif

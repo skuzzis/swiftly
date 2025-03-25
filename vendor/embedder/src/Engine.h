@@ -6,6 +6,7 @@
 #include <string>
 #include "engine/functions.h"
 #include "engine/classes.h"
+#include "Value.h"
 
 //////////////////////////////////////////////////////////////
 /////////////////    Scripting Engine Value    //////////////
@@ -71,6 +72,11 @@ void AddScriptingFunctionPost(EContext *ctx, std::string namespace_path, std::st
 /////////////////  Scripting Class Functions   //////////////
 ////////////////////////////////////////////////////////////
 
+#define MAKE_CLASS_INSTANCE(class_name, data) \
+    CreateScriptingClassInstance(context, class_name, data)
+#define MAKE_CLASS_INSTANCE_CTX(ctx, class_name, data) \
+    CreateScriptingClassInstance(ctx, class_name, data)
+
 #define ADD_CLASS(class_name) \
     AddScriptingClass(ctx, class_name)
 #define ADD_CLASS_CTX(ctx, class_name) \
@@ -88,11 +94,14 @@ void AddScriptingFunctionPost(EContext *ctx, std::string namespace_path, std::st
 #define ADD_CLASS_FUNCTION_POST_CTX(ctx, class_name, function_name, callback) \
     AddScriptingClassFunctionPost(ctx, class_name, function_name, callback)
 
-typedef void (*ScriptingClassFunctionCallback)(FunctionContext *, ClassData*);
+typedef void (*ScriptingClassFunctionCallback)(FunctionContext *, ClassData *);
 
-void AddScriptingClass(EContext* ctx, std::string class_name);
-void AddScriptingClassFunction(EContext* ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
+void AddScriptingClass(EContext *ctx, std::string class_name);
+void AddScriptingClassFunction(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
 void AddScriptingClassFunctionPre(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
 void AddScriptingClassFunctionPost(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
+
+EValue CreateScriptingClassInstance(FunctionContext *context, std::string class_name, std::map<std::string, std::any> classdata);
+EValue CreateScriptingClassInstance(EContext *context, std::string class_name, std::map<std::string, std::any> classdata);
 
 #endif

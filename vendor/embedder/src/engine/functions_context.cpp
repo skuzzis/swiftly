@@ -8,7 +8,7 @@ FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EC
     m_shouldSkipFirstArgument = shouldSkipFirstArgument;
 }
 
-FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue* vals, int argc)
+FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue *vals, int argc)
 {
     m_function_key = function_key;
     m_kind = kind;
@@ -40,9 +40,19 @@ bool FunctionContext::ShouldStopExecution()
 
 int FunctionContext::GetArgumentsCount()
 {
-    if(m_kind == ContextKinds::Lua) {
+    if (m_kind == ContextKinds::Lua)
+    {
         return lua_gettop(m_ctx->GetLuaState()) - (int)m_shouldSkipFirstArgument;
-    } else if(m_kind == ContextKinds::JavaScript) {
+    }
+    else if (m_kind == ContextKinds::JavaScript)
+    {
         return m_argc;
-    } else return 0;
+    }
+    else
+        return 0;
+}
+
+EContext *FunctionContext::GetPluginContext()
+{
+    return m_ctx;
 }

@@ -4,49 +4,53 @@
 
 #include <vector>
 
-void AddScriptingVariable(EContext* ctx, std::string namespace_path, std::string variable_name, EValue value)
+void AddScriptingVariable(EContext *ctx, std::string namespace_path, std::string variable_name, EValue value)
 {
-    if(ctx->GetKind() == ContextKinds::Lua) {
+    if (ctx->GetKind() == ContextKinds::Lua)
+    {
         int pop_values = 0;
         pop_values++;
 
         auto L = ctx->GetLuaState();
         lua_pushglobaltable(L);
-        
-        if(namespace_path != "_G") {
+
+        if (namespace_path != "_G")
+        {
             auto paths = str_split(namespace_path, ".");
-            for(auto path : paths) {
+            for (auto path : paths)
+            {
                 rawgetfield(L, -1, path.c_str());
-    
-                if(lua_isnil(L, -1)) {
+
+                if (lua_isnil(L, -1))
+                {
                     lua_pop(L, 1);
-    
+
                     lua_newtable(L); // parent ns, ns
-    
+
                     lua_pushvalue(L, -1); // parent ns, ns, ns
-    
+
                     // ns.__metatable = ns
                     lua_setmetatable(L, -2); // parent ns, ns
-    
+
                     // ns.__index = indexMetaMethod
                     lua_pushcfunction(L, &CHelpers::indexMetaMethod);
                     rawsetfield(L, -2, "__index"); // parent ns, ns
-    
+
                     // ns.__newindex = newindexMetaMethod
                     lua_pushcfunction(L, &CHelpers::newindexStaticMetaMethod);
                     rawsetfield(L, -2, "__newindex"); // pns, ns
-    
-                    lua_newtable(L); // pns, ns, propget table (pg)
+
+                    lua_newtable(L);                     // pns, ns, propget table (pg)
                     lua_rawsetp(L, -2, getPropgetKey()); // ns [propgetKey] = pg. pns, ns
-        
-                    lua_newtable(L); // pns, ns, propset table (ps)
+
+                    lua_newtable(L);                     // pns, ns, propset table (ps)
                     lua_rawsetp(L, -2, getPropsetKey()); // ns [propsetKey] = ps. pns, ns
-    
+
                     // pns [name] = ns
-                    lua_pushvalue(L, -1); // pns, ns, ns
+                    lua_pushvalue(L, -1);             // pns, ns, ns
                     rawsetfield(L, -3, path.c_str()); // pns, ns
                 }
-    
+
                 pop_values++;
             }
         }
@@ -55,38 +59,45 @@ void AddScriptingVariable(EContext* ctx, std::string namespace_path, std::string
         rawsetfield(L, -2, variable_name.c_str());
 
         lua_pop(L, pop_values);
-    } else if(ctx->GetKind() == ContextKinds::JavaScript) {
+    }
+    else if (ctx->GetKind() == ContextKinds::JavaScript)
+    {
         auto L = ctx->GetJSState();
         auto ns = JS_GetGlobalObject(L);
-        bool shouldFree = true;
+        auto gns = ns;
 
-        if(namespace_path != "_G") {
-            shouldFree = false;
+        if (namespace_path != "_G")
+        {
             auto paths = str_split(namespace_path, ".");
-            for(auto path : paths) {
-                if(path == "_G") break;
-    
+            for (auto path : paths)
+            {
+                if (path == "_G")
+                    break;
+
                 JSAtom at = JS_ValueToAtom(L, Stack<std::string>::pushJS(ctx, path));
-    
-                if(JS_HasProperty(L, ns, at)) {
+
+                if (JS_HasProperty(L, ns, at))
+                {
                     ns = JS_GetProperty(L, ns, at);
-                } else {
+                }
+                else
+                {
                     auto val = JS_NewObject(L);
                     JS_SetProperty(L, ns, at, val);
                     ns = val;
                 }
-    
+
                 JS_FreeAtom(L, at);
             }
         }
-        
+
         JS_SetPropertyStr(L, ns, variable_name.c_str(), value.pushJS());
-        if(shouldFree) JS_FreeValue(L, ns);
+        JS_FreeValue(L, gns);
     }
 }
 
-void AddScriptingVariables(EContext* ctx, std::string namespace_path, std::map<std::string, EValue> values)
+void AddScriptingVariables(EContext *ctx, std::string namespace_path, std::map<std::string, EValue> values)
 {
-    for(auto it = values.begin(); it != values.end(); ++it)
+    for (auto it = values.begin(); it != values.end(); ++it)
         AddScriptingVariable(ctx, namespace_path, it->first, it->second);
 }

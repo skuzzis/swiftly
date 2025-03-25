@@ -69,7 +69,7 @@ functioncbend:
     return hasResult;
 }
 
-JSValue JSFunctionCallback(JSContext* L, JSValue this_val, int argc, JSValue* argv, int magic, JSValue* func_data)
+JSValue JSFunctionCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv, int magic, JSValue *func_data)
 {
     auto ctx = GetContextByState(L);
     std::string str_key = Stack<std::string>::getJS(ctx, func_data[0]);
@@ -126,7 +126,8 @@ JSValue JSFunctionCallback(JSContext* L, JSValue this_val, int argc, JSValue* ar
         }
 
 functioncbendjs:
-    if (fctx.HasResult()) return fctx.pushJSResult();
+    if (fctx.HasResult())
+        return fctx.pushJSResult();
     return JS_UNDEFINED;
 }
 
@@ -194,24 +195,29 @@ void AddScriptingFunction(EContext *ctx, std::string namespace_path, std::string
     {
         auto L = ctx->GetJSState();
         auto ns = JS_GetGlobalObject(L);
-        bool shouldFree = true;
+        auto gns = ns;
 
-        if(namespace_path != "_G") {
-            shouldFree = false;
+        if (namespace_path != "_G")
+        {
             auto paths = str_split(namespace_path, ".");
-            for(auto path : paths) {
-                if(path == "_G") break;
-    
+            for (auto path : paths)
+            {
+                if (path == "_G")
+                    break;
+
                 JSAtom at = JS_ValueToAtom(L, Stack<std::string>::pushJS(ctx, path));
-    
-                if(JS_HasProperty(L, ns, at)) {
+
+                if (JS_HasProperty(L, ns, at))
+                {
                     ns = JS_GetProperty(L, ns, at);
-                } else {
+                }
+                else
+                {
                     auto val = JS_NewObject(L);
                     JS_SetProperty(L, ns, at, val);
                     ns = val;
                 }
-    
+
                 JS_FreeAtom(L, at);
             }
         }
@@ -219,10 +225,10 @@ void AddScriptingFunction(EContext *ctx, std::string namespace_path, std::string
         auto func_key = namespace_path + " " + function_name;
         ctx->AddFunctionCall(func_key, reinterpret_cast<void *>(callback));
 
-        std::vector<JSValue> vals = { Stack<std::string>::pushJS(ctx, func_key) };
+        std::vector<JSValue> vals = {Stack<std::string>::pushJS(ctx, func_key)};
         JS_SetPropertyStr(L, ns, function_name.c_str(), JS_NewCFunctionData(L, JSFunctionCallback, 0, 1, 1, vals.data()));
 
-        if(shouldFree) JS_FreeValue(L, ns);
+        JS_FreeValue(L, gns);
     }
 }
 
