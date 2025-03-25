@@ -7,6 +7,8 @@
 #include <string>
 #include <iostream>
 
+#include "GarbageCollector.h"
+
 class CHelpers
 {
 public:
@@ -145,6 +147,23 @@ public:
        }
 
        // no return
+    }
+
+    static int LuaGCFunction(lua_State* L)
+    {
+        void** udata = (void**)lua_touserdata(L, 1);
+        if(udata && *udata) {
+            if(CheckAndPopDeleteOnGC(*udata)) free(*udata);
+            *udata = nullptr;
+        }
+        return 0;
+    }
+
+    static void JSGCFunction(JSRuntime* rt, JSValue val)
+    {
+        auto opaque = JS_GetOpaque(val, JS_GetClassID(val));
+        if(opaque && CheckAndPopDeleteOnGC(opaque))
+            free(opaque);
     }
 };
 

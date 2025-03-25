@@ -9,6 +9,7 @@ private:
     std::string m_function_key;
     ContextKinds m_kind;
     EContext *m_ctx;
+    bool m_shouldSkipFirstArgument = false;
 
     int returnRef = LUA_NOREF;
     JSValue returnVal = JS_UNDEFINED;
@@ -18,7 +19,7 @@ private:
     int m_argc;
 
 public:
-    FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx);
+    FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, bool shouldSkipFirstArgument = false);
     FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue* vals, int argc);
     ~FunctionContext();
 
@@ -44,16 +45,17 @@ public:
     {
         if (m_kind == ContextKinds::Lua)
         {
-            if (index < 0 || index + 1 > lua_gettop(m_ctx->GetLuaState()))
+            if (index < 0 || index + 1 > lua_gettop(m_ctx->GetLuaState()) - (int)m_shouldSkipFirstArgument)
                 return *(T *)0;
 
-            return Stack<T>::getLua(m_ctx, index + 1);
+            return Stack<T>::getLua(m_ctx, index + 1 + (int)m_shouldSkipFirstArgument);
         }
         else if (m_kind == ContextKinds::JavaScript)
         {
             if(index < 0 || index >= m_argc) return *(T*)0;
             return Stack<T>::getJS(m_ctx, m_vals[index]);
         }
+        else return *(T *)0;
     }
 
     template <class T>
@@ -61,16 +63,17 @@ public:
     {
         if (m_kind == ContextKinds::Lua)
         {
-            if (index < 0 || index + 1 > lua_gettop(m_ctx->GetLuaState()))
+            if (index < 0 || index + 1 > lua_gettop(m_ctx->GetLuaState()) - (int)m_shouldSkipFirstArgument)
                 return defaultVal;
 
-            return Stack<T>::getLua(m_ctx, index + 1);
+            return Stack<T>::getLua(m_ctx, index + 1 + (int)m_shouldSkipFirstArgument);
         }
         else if (m_kind == ContextKinds::JavaScript)
         {
             if(index < 0 || index >= m_argc) return defaultVal;
             return Stack<T>::getJS(m_ctx, m_vals[index]);
         }
+        else return defaultVal;
     }
 
     template <class T>
@@ -109,6 +112,7 @@ public:
 
             return Stack<T>::getJS(m_ctx, returnVal);
         }
+        else return *(T *)0;
     }
 
     int GetArgumentsCount();

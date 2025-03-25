@@ -5,6 +5,7 @@
 #include "Value.h"
 #include <string>
 #include "engine/functions.h"
+#include "engine/classes.h"
 
 //////////////////////////////////////////////////////////////
 /////////////////    Scripting Engine Value    //////////////
@@ -65,5 +66,33 @@ typedef void (*ScriptingFunctionCallback)(FunctionContext *);
 void AddScriptingFunction(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
 void AddScriptingFunctionPre(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
 void AddScriptingFunctionPost(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
+
+//////////////////////////////////////////////////////////////
+/////////////////  Scripting Class Functions   //////////////
+////////////////////////////////////////////////////////////
+
+#define ADD_CLASS(class_name) \
+    AddScriptingClass(ctx, class_name)
+#define ADD_CLASS_CTX(ctx, class_name) \
+    AddScriptingClass(ctx, class_name)
+#define ADD_CLASS_FUNCTION(class_name, function_name, callback) \
+    AddScriptingClassFunction(ctx, class_name, function_name, callback)
+#define ADD_CLASS_FUNCTION_CTX(ctx, class_name, function_name, callback) \
+    AddScriptingClassFunction(ctx, class_name, function_name, callback)
+#define ADD_CLASS_FUNCTION_PRE(class_name, function_name, callback) \
+    AddScriptingClassFunctionPre(ctx, class_name, function_name, callback)
+#define ADD_CLASS_FUNCTION_PRE_CTX(ctx, class_name, function_name, callback) \
+    AddScriptingClassFunctionPre(ctx, class_name, function_name, callback)
+#define ADD_CLASS_FUNCTION_POST(class_name, function_name, callback) \
+    AddScriptingClassFunctionPost(ctx, class_name, function_name, callback)
+#define ADD_CLASS_FUNCTION_POST_CTX(ctx, class_name, function_name, callback) \
+    AddScriptingClassFunctionPost(ctx, class_name, function_name, callback)
+
+typedef void (*ScriptingClassFunctionCallback)(FunctionContext *, ClassData*);
+
+void AddScriptingClass(EContext* ctx, std::string class_name);
+void AddScriptingClassFunction(EContext* ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
+void AddScriptingClassFunctionPre(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
+void AddScriptingClassFunctionPost(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
 
 #endif

@@ -1,10 +1,11 @@
 #include "functions.h"
 
-FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx)
+FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, bool shouldSkipFirstArgument)
 {
     m_function_key = function_key;
     m_kind = kind;
     m_ctx = ctx;
+    m_shouldSkipFirstArgument = shouldSkipFirstArgument;
 }
 
 FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue* vals, int argc)
@@ -40,7 +41,7 @@ bool FunctionContext::ShouldStopExecution()
 int FunctionContext::GetArgumentsCount()
 {
     if(m_kind == ContextKinds::Lua) {
-        return lua_gettop(m_ctx->GetLuaState());
+        return lua_gettop(m_ctx->GetLuaState()) - (int)m_shouldSkipFirstArgument;
     } else if(m_kind == ContextKinds::JavaScript) {
         return m_argc;
     } else return 0;
