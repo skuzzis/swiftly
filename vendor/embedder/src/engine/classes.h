@@ -24,7 +24,6 @@ public:
         }
         catch (std::bad_any_cast &e)
         {
-            printf("[Embedder] Invalid cast: %s\n", e.what());
             return *(T *)0;
         }
     }
@@ -38,7 +37,6 @@ public:
         }
         catch (std::bad_any_cast &e)
         {
-            printf("[Embedder] Invalid cast: %s\n", e.what());
             return value;
         }
     }

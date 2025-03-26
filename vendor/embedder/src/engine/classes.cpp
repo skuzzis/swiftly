@@ -4,6 +4,37 @@
 
 #include <regex>
 
+int LuaMemberCallbackIndex(lua_State* L, std::string str_key);
+int LuaMemberCallbackNewIndex(lua_State* L, std::string str_key);
+int LuaClassFunctionCall(lua_State *L);
+
+int LuaClassIndex(lua_State* L)
+{
+    auto ctx = GetContextByState(L);
+    std::string class_name = lua_tostring(L, lua_upvalueindex(1));
+    std::string member_name = Stack<std::string>::getLua(ctx, 2);
+
+    std::string str_key = class_name + " " + member_name;
+    if(ctx->GetClassFunctionCall(str_key)) {
+        lua_pushstring(L, str_key.c_str());
+        lua_pushcclosure(L, LuaClassFunctionCall, 1);
+        return 1;
+    } else return LuaMemberCallbackIndex(L, str_key);
+}
+
+int LuaClassNewIndex(lua_State* L)
+{
+    auto ctx = GetContextByState(L);
+    std::string class_name = lua_tostring(L, lua_upvalueindex(1));
+    std::string member_name = Stack<std::string>::getLua(ctx, 2);
+    std::string str_key = class_name + " " + member_name;
+
+    if(ctx->GetClassMemberCalls(str_key).first != nullptr) {
+        return LuaMemberCallbackNewIndex(L, str_key);
+    }
+    return 0;
+}
+
 int LuaClassFunctionCall(lua_State *L)
 {
     std::string str_key = lua_tostring(L, lua_upvalueindex(1));
@@ -13,8 +44,9 @@ int LuaClassFunctionCall(lua_State *L)
     if (!func)
         return 0;
 
+    auto splits = str_split(str_key, " ");
     ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
-    FunctionContext fctx(str_key, ctx->GetKind(), ctx, true);
+    FunctionContext fctx(str_key, ctx->GetKind(), ctx, splits[0] != splits[1], splits[0] == splits[1]);
     FunctionContext *fptr = &fctx;
 
     ClassData *data = nullptr;
@@ -24,7 +56,6 @@ int LuaClassFunctionCall(lua_State *L)
     auto functionPostCalls = ctx->GetClassFunctionPostCalls();
     bool stopExecution = false;
 
-    auto splits = str_split(str_key, " ");
     if (splits[0] == splits[1])
     {
         data = new ClassData({});
@@ -201,8 +232,13 @@ void AddScriptingClass(EContext *ctx, std::string class_name)
         lua_pushcfunction(L, CHelpers::LuaGCFunction);
         rawsetfield(L, -2, "__gc");
 
-        lua_newtable(L);
+        lua_pushstring(L, class_name.c_str());
+        lua_pushcclosure(L, LuaClassIndex, 1);
         rawsetfield(L, -2, "__index");
+
+        lua_pushstring(L, class_name.c_str());
+        lua_pushcclosure(L, LuaClassNewIndex, 1);
+        rawsetfield(L, -2, "__newindex");
 
         lua_pop(L, 1);
     }
@@ -238,18 +274,6 @@ void AddScriptingClassFunction(EContext *ctx, std::string class_name, std::strin
             lua_pushstring(L, func_key.c_str());
             lua_pushcclosure(L, LuaClassFunctionCall, 1);
             lua_setglobal(L, class_name.c_str());
-        }
-        else
-        {
-            luaL_getmetatable(L, class_name.c_str());
-
-            rawgetfield(L, -1, "__index");
-
-            lua_pushstring(L, func_key.c_str());
-            lua_pushcclosure(L, LuaClassFunctionCall, 1);
-            rawsetfield(L, -2, function_name.c_str());
-
-            lua_pop(L, 2);
         }
     }
     else if (ctx->GetKind() == ContextKinds::JavaScript)

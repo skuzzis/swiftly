@@ -31,6 +31,10 @@ private:
     std::map<std::string, std::vector<void *>> classFunctionPreCalls;
     std::map<std::string, std::vector<void *>> classFunctionPostCalls;
 
+    std::map<std::string, std::pair<void *, void *>> classMemberCalls;
+    std::map<std::string, std::vector<std::pair<void *, void *>>> classMemberPreCalls;
+    std::map<std::string, std::vector<std::pair<void *, void *>>> classMemberPostCalls;
+
 public:
     EContext(ContextKinds kind);
     ~EContext();
@@ -71,6 +75,15 @@ public:
 
     void AddClassFunctionPostCalls(std::string key, void *val);
     std::map<std::string, std::vector<void *>> GetClassFunctionPostCalls();
+
+    void AddClassMemberCalls(std::string key, std::pair<void *, void *> val);
+    std::pair<void *, void *> GetClassMemberCalls(std::string key);
+
+    void AddClassMemberPreCalls(std::string key, std::pair<void *, void *> val);
+    std::map<std::string, std::vector<std::pair<void *, void *>>> GetClassMemberPreCalls();
+
+    void AddClassMemberPostCalls(std::string key, std::pair<void *, void *> val);
+    std::map<std::string, std::vector<std::pair<void *, void *>>> GetClassMemberPostCalls();
 };
 
 EContext *GetContextByState(JSContext *ctx);

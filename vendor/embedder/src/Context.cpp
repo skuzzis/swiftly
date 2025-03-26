@@ -292,6 +292,44 @@ std::map<std::string, std::vector<void *>> EContext::GetClassFunctionPostCalls()
     return classFunctionPostCalls;
 }
 
+void EContext::AddClassMemberCalls(std::string key, std::pair<void *, void *> val)
+{
+    classMemberCalls.insert_or_assign(key, val);
+}
+
+std::pair<void *, void *> EContext::GetClassMemberCalls(std::string key)
+{
+    if (classMemberCalls.find(key) == classMemberCalls.end())
+        return {nullptr, nullptr};
+    return classMemberCalls[key];
+}
+
+void EContext::AddClassMemberPreCalls(std::string key, std::pair<void *, void *> val)
+{
+    if (classMemberPreCalls.find(key) == classMemberPreCalls.end())
+        classMemberPreCalls.insert({key, {}});
+
+    classMemberPreCalls[key].push_back(val);
+}
+
+std::map<std::string, std::vector<std::pair<void *, void *>>> EContext::GetClassMemberPreCalls()
+{
+    return classMemberPreCalls;
+}
+
+void EContext::AddClassMemberPostCalls(std::string key, std::pair<void *, void *> val)
+{
+    if (classMemberPostCalls.find(key) == classMemberPostCalls.end())
+        classMemberPostCalls.insert({key, {}});
+
+    classMemberPostCalls[key].push_back(val);
+}
+
+std::map<std::string, std::vector<std::pair<void *, void *>>> EContext::GetClassMemberPostCalls()
+{
+    return classMemberPostCalls;
+}
+
 JSValue &EContext::GetClassPrototype(std::string className)
 {
     if (classPrototypes.find(className) == classPrototypes.end())

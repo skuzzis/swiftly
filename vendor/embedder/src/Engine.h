@@ -72,11 +72,6 @@ void AddScriptingFunctionPost(EContext *ctx, std::string namespace_path, std::st
 /////////////////  Scripting Class Functions   //////////////
 ////////////////////////////////////////////////////////////
 
-#define MAKE_CLASS_INSTANCE(class_name, data) \
-    CreateScriptingClassInstance(context, class_name, data)
-#define MAKE_CLASS_INSTANCE_CTX(ctx, class_name, data) \
-    CreateScriptingClassInstance(ctx, class_name, data)
-
 #define ADD_CLASS(class_name) \
     AddScriptingClass(ctx, class_name)
 #define ADD_CLASS_CTX(ctx, class_name) \
@@ -101,7 +96,41 @@ void AddScriptingClassFunction(EContext *ctx, std::string class_name, std::strin
 void AddScriptingClassFunctionPre(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
 void AddScriptingClassFunctionPost(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
 
+//////////////////////////////////////////////////////////////
+/////////////////   Scripting Class Instance   //////////////
+////////////////////////////////////////////////////////////
+
+#define MAKE_CLASS_INSTANCE(class_name, data) \
+    CreateScriptingClassInstance(context, class_name, data)
+#define MAKE_CLASS_INSTANCE_CTX(ctx, class_name, data) \
+    CreateScriptingClassInstance(ctx, class_name, data)
+
 EValue CreateScriptingClassInstance(FunctionContext *context, std::string class_name, std::map<std::string, std::any> classdata);
 EValue CreateScriptingClassInstance(EContext *context, std::string class_name, std::map<std::string, std::any> classdata);
+
+//////////////////////////////////////////////////////////////
+/////////////////   Scripting Class Members    //////////////
+////////////////////////////////////////////////////////////
+
+#define ADD_CLASS_MEMBER(class_name, member_name, callback_get, callback_set) \
+    AddScriptingClassMember(ctx, class_name, member_name, callback_get, callback_set)
+#define ADD_CLASS_MEMBER_CTX(ctx, class_name, member_name, callback_get, callback_set) \
+    AddScriptingClassMember(ctx, class_name, member_name, callback_get, callback_set)
+#define ADD_CLASS_MEMBER_PRE(class_name, member_name, callback_get, callback_set) \
+    AddScriptingClassMemberPre(ctx, class_name, member_name, callback_get, callback_set)
+#define ADD_CLASS_MEMBER_PRE_CTX(ctx, class_name, member_name, callback_get, callback_set) \
+    AddScriptingClassMemberPre(ctx, class_name, member_name, callback_get, callback_set)
+#define ADD_CLASS_MEMBER_POST(class_name, member_name, callback_get, callback_set) \
+    AddScriptingClassMemberPost(ctx, class_name, member_name, callback_get, callback_set)
+#define ADD_CLASS_MEMBER_POST_CTX(ctx, class_name, member_name, callback_get, callback_set) \
+    AddScriptingClassMemberPost(ctx, class_name, member_name, callback_get, callback_set)
+#define ADD_CLASS_MEMBER_READONLY(class_name, member_name, callback_get) \
+    AddScriptingClassMember(ctx, class_name, member_name, callback_get, [](FunctionContext *context, ClassData *data) -> void {})
+#define ADD_CLASS_MEMBER_READONLY_CTX(ctx, class_name, member_name, callback_get) \
+    AddScriptingClassMember(ctx, class_name, member_name, callback_get, [](FunctionContext *context, ClassData *data) -> void {})
+
+void AddScriptingClassMember(EContext *ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
+void AddScriptingClassMemberPre(EContext *ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
+void AddScriptingClassMemberPost(EContext *ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
 
 #endif
