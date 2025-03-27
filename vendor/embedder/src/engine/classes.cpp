@@ -1,6 +1,7 @@
 #include "../Engine.h"
 #include "classes.h"
 #include "../CHelpers.h"
+#include "../Stack.h"
 
 #include <regex>
 
@@ -73,19 +74,16 @@ int LuaClassFunctionCall(lua_State *L)
     if (splits[0] == splits[1])
     {
         data = new ClassData({}, splits[0]);
+
+        Stack<ClassData*>::pushLua(ctx, data);
+
         MarkDeleteOnGC(data);
-
-        ClassData **udata = (ClassData **)lua_newuserdata(L, sizeof(ClassData *));
-        *udata = data;
-
-        luaL_getmetatable(L, splits[0].c_str());
-        lua_setmetatable(L, -2);
 
         ignoreCustomReturn = true;
     }
     else
     {
-        data = *(ClassData **)luaL_checkudata(L, 1, splits[0].c_str());
+        data = Stack<ClassData*>::getLua(ctx, 1);
     }
 
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
@@ -163,24 +161,13 @@ JSValue JSClassCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv,
     if (splits[0] == splits[1])
     {
         data = new ClassData({}, splits[0]);
+        ret = Stack<ClassData*>::pushJS(ctx, data);
+        
+        if(JS_IsException(ret)) {
+            delete data;
+            return ret;
+        }
         MarkDeleteOnGC(data);
-
-        JSClassID &id = *(ctx->GetClassID(splits[0]));
-        auto proto = ctx->GetClassPrototype(splits[0]);
-        JS_SetClassProto(L, id, proto);
-        ret = JS_NewObjectProtoClass(L, JS_GetClassProto(L, id), id);
-        JS_FreeValue(L, proto);
-
-        if (JS_IsException(ret))
-        {
-            JS_FreeValue(L, ret);
-            return JS_EXCEPTION;
-        }
-        else
-        {
-            JS_SetOpaque(ret, (void *)data);
-        }
-
         ignoreCustomReturn = true;
     }
     else
@@ -338,13 +325,8 @@ EValue CreateScriptingClassInstance(EContext *context, std::string class_name, s
     {
         auto L = context->GetLuaState();
         ClassData *data = new ClassData(classdata, class_name);
+        Stack<ClassData*>::pushLua(context, data);
         MarkDeleteOnGC(data);
-
-        ClassData **udata = (ClassData **)lua_newuserdata(L, sizeof(ClassData *));
-        *udata = data;
-
-        luaL_getmetatable(L, class_name.c_str());
-        lua_setmetatable(L, -2);
 
         return EValue(context, 0, false);
     }
@@ -352,23 +334,13 @@ EValue CreateScriptingClassInstance(EContext *context, std::string class_name, s
     {
         auto L = context->GetJSState();
         auto data = new ClassData(classdata, class_name);
-        MarkDeleteOnGC(data);
-
-        JSClassID &id = *(context->GetClassID(class_name));
-        auto proto = context->GetClassPrototype(class_name);
-        JS_SetClassProto(L, id, proto);
-        auto ret = JS_NewObjectProtoClass(L, JS_GetClassProto(L, id), id);
-        JS_FreeValue(L, proto);
-
-        if (JS_IsException(ret))
-        {
-            JS_FreeValue(L, ret);
+        auto ret = Stack<ClassData*>::pushJS(context, data);
+        if(JS_IsException(ret)) {
+            delete data;
             return EValue(context);
         }
-        else
-        {
-            JS_SetOpaque(ret, (void *)data);
-        }
+
+        MarkDeleteOnGC(data);
         EValue v(context, ret);
         JS_FreeValue(L, ret);
         return v;

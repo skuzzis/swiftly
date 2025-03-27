@@ -4,7 +4,6 @@
 #include <map>
 #include <string>
 #include <any>
-#include "../Stack.h"
 
 class ClassData
 {

@@ -14,6 +14,7 @@
 #include "Context.h"
 #include "Helpers.h"
 #include "GarbageCollector.h"
+#include "engine/classes.h"
 
 template <class T>
 struct Stack;
@@ -1189,17 +1190,49 @@ struct Stack<std::pair<T1, T2>>
     }
 };
 
-class ClassData;
-
 template<>
 struct Stack<ClassData*>
 {
     static void pushLua(EContext* ctx, ClassData* value)
     {
+        if(ShouldDeleteOnGC(value)) {
+            value = new ClassData(*value);
+            MarkDeleteOnGC(value);
+        }
+
+        auto L = ctx->GetLuaState();
+        ClassData **udata = (ClassData **)lua_newuserdata(L, sizeof(ClassData *));
+        *udata = value;
+
+        luaL_getmetatable(L, value->GetClassname().c_str());
+        lua_setmetatable(L, -2);
     }
 
     static JSValue pushJS(EContext* ctx, ClassData* value)
     {
+        if(ShouldDeleteOnGC(value)) {
+            value = new ClassData(*value);
+            MarkDeleteOnGC(value);
+        }
+        
+        auto L = ctx->GetJSState();
+        JSClassID &id = *(ctx->GetClassID(value->GetClassname()));
+        auto proto = ctx->GetClassPrototype(value->GetClassname());
+        JS_SetClassProto(L, id, proto);
+        auto ret = JS_NewObjectProtoClass(L, JS_GetClassProto(L, id), id);
+        JS_FreeValue(L, proto);
+
+        if (JS_IsException(ret))
+        {
+            JS_FreeValue(L, ret);
+            return JS_EXCEPTION;
+        }
+        else
+        {
+            JS_SetOpaque(ret, (void *)value);
+        }
+
+        return ret;
     }
 
     static ClassData* getLua(EContext* ctx, int ref)

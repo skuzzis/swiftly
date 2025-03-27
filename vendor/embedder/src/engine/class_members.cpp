@@ -1,6 +1,7 @@
 #include "classes.h"
 #include "../Engine.h"
 #include "../CHelpers.h"
+#include "../Stack.h"
 
 #include <regex>
 
