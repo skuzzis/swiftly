@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "GarbageCollector.h"
+#include "engine/classes.h"
 
 class CHelpers
 {
@@ -151,9 +152,9 @@ public:
 
     static int LuaGCFunction(lua_State* L)
     {
-        void** udata = (void**)lua_touserdata(L, 1);
+        ClassData** udata = (ClassData**)lua_touserdata(L, 1);
         if(udata && *udata) {
-            if(CheckAndPopDeleteOnGC(*udata)) free(*udata);
+            if(CheckAndPopDeleteOnGC(*udata)) delete *udata;
             *udata = nullptr;
         }
         return 0;
@@ -161,9 +162,9 @@ public:
 
     static void JSGCFunction(JSRuntime* rt, JSValue val)
     {
-        auto opaque = JS_GetOpaque(val, JS_GetClassID(val));
+        ClassData* opaque = (ClassData*)JS_GetOpaque(val, JS_GetClassID(val));
         if(opaque && CheckAndPopDeleteOnGC(opaque))
-            free(opaque);
+            delete opaque;
     }
 };
 

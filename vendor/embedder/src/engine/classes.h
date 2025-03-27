@@ -5,14 +5,18 @@
 #include <string>
 #include <any>
 
+class EContext;
+
 class ClassData
 {
 private:
     std::map<std::string, std::any> m_classData;
     std::string m_className;
+    EContext* m_ctx;
 
 public:
-    ClassData(std::map<std::string, std::any> data, std::string className);
+    ClassData(std::map<std::string, std::any> data, std::string className, EContext* ctx);
+    ~ClassData();
 
     std::string GetClassname();
 

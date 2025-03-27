@@ -24,17 +24,8 @@ int LuaClassIndex(lua_State* L)
         return 1;
     }
 
-    lua_getmetatable(L, 1);
-    lua_getfield(L, -1, "__index");
-    if (lua_isfunction(L, -1)) {
-        lua_pushvalue(L, 1);
-        lua_pushvalue(L, 2);
-        lua_call(L, 2, 1);
-        return 1;
-    } else {
-        lua_pushnil(L);
-        return 1;
-    }
+    lua_pushnil(L);
+    return 1;
 }
 
 int LuaClassNewIndex(lua_State* L)
@@ -73,7 +64,7 @@ int LuaClassFunctionCall(lua_State *L)
 
     if (splits[0] == splits[1])
     {
-        data = new ClassData({}, splits[0]);
+        data = new ClassData({}, splits[0], ctx);
 
         Stack<ClassData*>::pushLua(ctx, data);
 
@@ -160,7 +151,7 @@ JSValue JSClassCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv,
     auto splits = str_split(str_key, " ");
     if (splits[0] == splits[1])
     {
-        data = new ClassData({}, splits[0]);
+        data = new ClassData({}, splits[0], ctx);
         ret = Stack<ClassData*>::pushJS(ctx, data);
         
         if(JS_IsException(ret)) {
@@ -231,9 +222,6 @@ void AddScriptingClass(EContext *ctx, std::string class_name)
 
         luaL_newmetatable(L, class_name.c_str());
 
-        lua_pushcfunction(L, CHelpers::LuaGCFunction);
-        rawsetfield(L, -2, "__gc");
-
         lua_pushstring(L, class_name.c_str());
         lua_pushcclosure(L, LuaClassIndex, 1);
         rawsetfield(L, -2, "__index");
@@ -241,6 +229,9 @@ void AddScriptingClass(EContext *ctx, std::string class_name)
         lua_pushstring(L, class_name.c_str());
         lua_pushcclosure(L, LuaClassNewIndex, 1);
         rawsetfield(L, -2, "__newindex");
+
+        lua_pushcfunction(L, CHelpers::LuaGCFunction);
+        rawsetfield(L, -2, "__gc");
 
         lua_pop(L, 1);
     }
@@ -324,7 +315,7 @@ EValue CreateScriptingClassInstance(EContext *context, std::string class_name, s
     if (context->GetKind() == ContextKinds::Lua)
     {
         auto L = context->GetLuaState();
-        ClassData *data = new ClassData(classdata, class_name);
+        ClassData *data = new ClassData(classdata, class_name, context);
         Stack<ClassData*>::pushLua(context, data);
         MarkDeleteOnGC(data);
 
@@ -333,7 +324,7 @@ EValue CreateScriptingClassInstance(EContext *context, std::string class_name, s
     else if (context->GetKind() == ContextKinds::JavaScript)
     {
         auto L = context->GetJSState();
-        auto data = new ClassData(classdata, class_name);
+        auto data = new ClassData(classdata, class_name, context);
         auto ret = Stack<ClassData*>::pushJS(context, data);
         if(JS_IsException(ret)) {
             delete data;
