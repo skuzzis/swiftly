@@ -17,7 +17,7 @@ int LuaMemberCallbackIndex(lua_State* L, std::string str_key)
     FunctionContext *fptr = &fctx;
 
     auto splits = str_split(str_key, " ");
-    ClassData *data = *(ClassData **)luaL_checkudata(L, 1, splits[0].c_str());;
+    ClassData *data = *(ClassData **)luaL_checkudata(L, 1, splits[0].c_str());
 
     auto functionPreCalls = ctx->GetClassMemberPreCalls();
     auto functionPostCalls = ctx->GetClassMemberPostCalls();
@@ -84,7 +84,7 @@ int LuaMemberCallbackNewIndex(lua_State* L, std::string str_key)
     FunctionContext *fptr = &fctx;
 
     auto splits = str_split(str_key, " ");
-    ClassData *data = *(ClassData **)luaL_checkudata(L, 1, splits[0].c_str());;
+    ClassData *data = *(ClassData **)luaL_checkudata(L, 1, splits[0].c_str());
 
     auto functionPreCalls = ctx->GetClassMemberPreCalls();
     auto functionPostCalls = ctx->GetClassMemberPostCalls();
@@ -279,13 +279,13 @@ void AddScriptingClassMember(EContext *ctx, std::string class_name, std::string 
         std::string func_key = class_name + " " + member_name;
         ctx->AddClassMemberCalls(func_key, {reinterpret_cast<void *>(callback_get), reinterpret_cast<void *>(callback_set)});
 
-        auto proto = ctx->GetClassPrototype(class_name);
+        auto &proto = ctx->GetClassPrototype(class_name);
         JSAtom atom = JS_NewAtom(L, member_name.c_str());
 
         std::vector<JSValue> vals = {Stack<std::string>::pushJS(ctx, func_key)};
         JS_DefinePropertyGetSet(L, proto, atom, 
-            JS_NewCFunctionData(L, JSMemberGetCallback, 0, 1, 1, vals.data()),
-            JS_NewCFunctionData(L, JSMemberSetCallback, 1, 1, 1, vals.data()),
+            JS_NewCFunctionData(L, JSMemberGetCallback, 0, 0, 1, vals.data()),
+            JS_NewCFunctionData(L, JSMemberSetCallback, 1, 0, 1, vals.data()),
             0
         );
 

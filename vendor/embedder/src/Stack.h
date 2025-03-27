@@ -1189,4 +1189,38 @@ struct Stack<std::pair<T1, T2>>
     }
 };
 
+class ClassData;
+
+template<>
+struct Stack<ClassData*>
+{
+    static void pushLua(EContext* ctx, ClassData* value)
+    {
+    }
+
+    static JSValue pushJS(EContext* ctx, ClassData* value)
+    {
+    }
+
+    static ClassData* getLua(EContext* ctx, int ref)
+    {
+        return *(ClassData**)lua_touserdata(ctx->GetLuaState(), ref);
+    }
+
+    static ClassData* getJS(EContext* ctx, JSValue value)
+    {
+        return (ClassData*)JS_GetOpaque(value, JS_GetClassID(value));
+    }
+
+    static bool isLuaInstance(EContext* ctx, int ref)
+    {
+        return lua_isuserdata(ctx->GetLuaState(), ref);
+    }
+
+    static bool isJSInstance(EContext* ctx, JSValue value)
+    {
+        return JS_GetOpaque(value, JS_GetClassID(value)) != nullptr;
+    }
+};
+
 #endif

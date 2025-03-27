@@ -28,6 +28,8 @@ public:
     bool HasResult();
     EContext *GetPluginContext();
 
+    std::string GetFunctionKey();
+
     void StopExecution();
     bool ShouldStopExecution();
 

@@ -58,3 +58,8 @@ EContext *FunctionContext::GetPluginContext()
 {
     return m_ctx;
 }
+
+std::string FunctionContext::GetFunctionKey()
+{
+    return m_function_key;
+}

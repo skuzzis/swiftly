@@ -15,11 +15,25 @@ int LuaClassIndex(lua_State* L)
     std::string member_name = Stack<std::string>::getLua(ctx, 2);
 
     std::string str_key = class_name + " " + member_name;
-    if(ctx->GetClassFunctionCall(str_key)) {
+    if(ctx->GetClassMemberCalls(str_key).first) {
+        return LuaMemberCallbackIndex(L, str_key);
+    } else if(ctx->GetClassFunctionCall(str_key)) {
         lua_pushstring(L, str_key.c_str());
         lua_pushcclosure(L, LuaClassFunctionCall, 1);
         return 1;
-    } else return LuaMemberCallbackIndex(L, str_key);
+    }
+
+    lua_getmetatable(L, 1);
+    lua_getfield(L, -1, "__index");
+    if (lua_isfunction(L, -1)) {
+        lua_pushvalue(L, 1);
+        lua_pushvalue(L, 2);
+        lua_call(L, 2, 1);
+        return 1;
+    } else {
+        lua_pushnil(L);
+        return 1;
+    }
 }
 
 int LuaClassNewIndex(lua_State* L)
@@ -46,7 +60,7 @@ int LuaClassFunctionCall(lua_State *L)
 
     auto splits = str_split(str_key, " ");
     ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
-    FunctionContext fctx(str_key, ctx->GetKind(), ctx, splits[0] != splits[1], splits[0] == splits[1]);
+    FunctionContext fctx(str_key, ctx->GetKind(), ctx, splits[0] != splits[1], splits[0] == splits[1], false);
     FunctionContext *fptr = &fctx;
 
     ClassData *data = nullptr;
@@ -58,7 +72,7 @@ int LuaClassFunctionCall(lua_State *L)
 
     if (splits[0] == splits[1])
     {
-        data = new ClassData({});
+        data = new ClassData({}, splits[0]);
         MarkDeleteOnGC(data);
 
         ClassData **udata = (ClassData **)lua_newuserdata(L, sizeof(ClassData *));
@@ -148,12 +162,13 @@ JSValue JSClassCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv,
     auto splits = str_split(str_key, " ");
     if (splits[0] == splits[1])
     {
-        data = new ClassData({});
+        data = new ClassData({}, splits[0]);
         MarkDeleteOnGC(data);
 
         JSClassID &id = *(ctx->GetClassID(splits[0]));
         auto proto = ctx->GetClassPrototype(splits[0]);
-        ret = JS_NewObjectProtoClass(L, proto, id);
+        JS_SetClassProto(L, id, proto);
+        ret = JS_NewObjectProtoClass(L, JS_GetClassProto(L, id), id);
         JS_FreeValue(L, proto);
 
         if (JS_IsException(ret))
@@ -292,7 +307,7 @@ void AddScriptingClassFunction(EContext *ctx, std::string class_name, std::strin
         }
         else
         {
-            auto proto = ctx->GetClassPrototype(class_name);
+            auto &proto = ctx->GetClassPrototype(class_name);
 
             std::vector<JSValue> vals = {Stack<std::string>::pushJS(ctx, func_key)};
             JS_SetPropertyStr(L, proto, function_name.c_str(), JS_NewCFunctionData(L, JSClassCallback, 0, 1, 1, vals.data()));
@@ -322,7 +337,7 @@ EValue CreateScriptingClassInstance(EContext *context, std::string class_name, s
     if (context->GetKind() == ContextKinds::Lua)
     {
         auto L = context->GetLuaState();
-        ClassData *data = new ClassData(classdata);
+        ClassData *data = new ClassData(classdata, class_name);
         MarkDeleteOnGC(data);
 
         ClassData **udata = (ClassData **)lua_newuserdata(L, sizeof(ClassData *));
@@ -336,12 +351,13 @@ EValue CreateScriptingClassInstance(EContext *context, std::string class_name, s
     else if (context->GetKind() == ContextKinds::JavaScript)
     {
         auto L = context->GetJSState();
-        auto data = new ClassData(classdata);
+        auto data = new ClassData(classdata, class_name);
         MarkDeleteOnGC(data);
 
         JSClassID &id = *(context->GetClassID(class_name));
         auto proto = context->GetClassPrototype(class_name);
-        auto ret = JS_NewObjectProtoClass(L, proto, id);
+        JS_SetClassProto(L, id, proto);
+        auto ret = JS_NewObjectProtoClass(L, JS_GetClassProto(L, id), id);
         JS_FreeValue(L, proto);
 
         if (JS_IsException(ret))
