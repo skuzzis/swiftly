@@ -41,6 +41,8 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/plugins/manager.cpp',
     'src/plugins/object.cpp',
+
+    'src/scripting/core.cpp',
     
     'src/sdk/access.cpp',
     'src/sdk/schema.cpp',

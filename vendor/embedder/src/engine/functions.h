@@ -65,6 +65,26 @@ public:
             return *(T *)0;
     }
 
+    std::string GetArgumentAsString(int index)
+    {
+        if (m_kind == ContextKinds::Lua)
+        {
+            if (index < 0 || index + 1 > lua_gettop(m_ctx->GetLuaState()) - (int)m_shouldSkipFirstArgument - (int)m_skipCreatedUData - (int)m_shouldSkipSecondArgument)
+                return "";
+
+            return EValue::fromLuaStack(m_ctx, index + 1 + (int)m_shouldSkipFirstArgument + (int)m_shouldSkipSecondArgument).tostring();
+        }
+        else if (m_kind == ContextKinds::JavaScript)
+        {
+            if (index < 0 || index >= m_argc)
+                return "";
+
+            return EValue::fromJSStack(m_ctx, m_vals[index]).tostring();
+        }
+        else
+            return "";
+    }
+
     template <class T>
     T GetArgumentOr(int index, T defaultVal)
     {

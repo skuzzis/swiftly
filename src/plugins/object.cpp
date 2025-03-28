@@ -4,6 +4,7 @@
 #include <utils/common.h>
 #include <utils/utils.h>
 #include <filesystem/files/files.h>
+#include <scripting/core.h>
 
 PluginObject::PluginObject(std::string m_name, ContextKinds m_kind)
 {
@@ -89,6 +90,8 @@ bool PluginObject::LoadScriptingEnvironment()
     ctx = new EContext(kind);
 
     std::string fileExt = GetKind() == ContextKinds::Lua ? ".lua" : ".js";
+
+    SetupScriptingEnvironment(*this, ctx);
 
     std::vector<std::string> scriptingFiles = Files::FetchFileNames("addons/swiftly/bin/scripting");
     for (std::string file : scriptingFiles)
