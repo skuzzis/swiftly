@@ -30,8 +30,8 @@
 #define ADD_VARIABLES_CTX(ctx, ns_path, values) \
     AddScriptingVariables(ctx, ns_path, values)
 
-void AddScriptingVariable(EContext *ctx, std::string namespace_path, std::string variable_name, EValue value);
-void AddScriptingVariables(EContext *ctx, std::string namespace_path, std::map<std::string, EValue> values);
+void AddScriptingVariable(EContext* ctx, std::string namespace_path, std::string variable_name, EValue value);
+void AddScriptingVariables(EContext* ctx, std::string namespace_path, std::map<std::string, EValue> values);
 
 //////////////////////////////////////////////////////////////
 /////////////////  Scripting Engine Functions  //////////////
@@ -62,11 +62,11 @@ void AddScriptingVariables(EContext *ctx, std::string namespace_path, std::map<s
 #define ADD_FUNCTION_NS_CTX_POST(ctx, ns_path, function_name, callback) \
     AddScriptingFunctionPost(ctx, ns_path, function_name, callback)
 
-typedef void (*ScriptingFunctionCallback)(FunctionContext *);
+typedef void (*ScriptingFunctionCallback)(FunctionContext*);
 
-void AddScriptingFunction(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
-void AddScriptingFunctionPre(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
-void AddScriptingFunctionPost(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
+void AddScriptingFunction(EContext* ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
+void AddScriptingFunctionPre(EContext* ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
+void AddScriptingFunctionPost(EContext* ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback);
 
 //////////////////////////////////////////////////////////////
 /////////////////  Scripting Class Functions   //////////////
@@ -89,24 +89,24 @@ void AddScriptingFunctionPost(EContext *ctx, std::string namespace_path, std::st
 #define ADD_CLASS_FUNCTION_POST_CTX(ctx, class_name, function_name, callback) \
     AddScriptingClassFunctionPost(ctx, class_name, function_name, callback)
 
-typedef void (*ScriptingClassFunctionCallback)(FunctionContext *, ClassData *);
+typedef void (*ScriptingClassFunctionCallback)(FunctionContext*, ClassData*);
 
-void AddScriptingClass(EContext *ctx, std::string class_name);
-void AddScriptingClassFunction(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
-void AddScriptingClassFunctionPre(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
-void AddScriptingClassFunctionPost(EContext *ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
+void AddScriptingClass(EContext* ctx, std::string class_name);
+void AddScriptingClassFunction(EContext* ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
+void AddScriptingClassFunctionPre(EContext* ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
+void AddScriptingClassFunctionPost(EContext* ctx, std::string class_name, std::string function_name, ScriptingClassFunctionCallback callback);
 
 //////////////////////////////////////////////////////////////
 /////////////////   Scripting Class Instance   //////////////
 ////////////////////////////////////////////////////////////
 
-#define MAKE_CLASS_INSTANCE(class_name, data) \
-    CreateScriptingClassInstance(context, class_name, data)
-#define MAKE_CLASS_INSTANCE_CTX(ctx, class_name, data) \
-    CreateScriptingClassInstance(ctx, class_name, data)
+#define MAKE_CLASS_INSTANCE(class_name, ...) \
+    CreateScriptingClassInstance(context, class_name, __VA_ARGS__)
+#define MAKE_CLASS_INSTANCE_CTX(ctx, class_name, ...) \
+    CreateScriptingClassInstance(ctx, class_name, __VA_ARGS__)
 
-EValue CreateScriptingClassInstance(FunctionContext *context, std::string class_name, std::map<std::string, std::any> classdata);
-EValue CreateScriptingClassInstance(EContext *context, std::string class_name, std::map<std::string, std::any> classdata);
+EValue CreateScriptingClassInstance(FunctionContext* context, std::string class_name, std::map<std::string, std::any> classdata);
+EValue CreateScriptingClassInstance(EContext* context, std::string class_name, std::map<std::string, std::any> classdata);
 
 //////////////////////////////////////////////////////////////
 /////////////////   Scripting Class Members    //////////////
@@ -129,8 +129,8 @@ EValue CreateScriptingClassInstance(EContext *context, std::string class_name, s
 #define ADD_CLASS_MEMBER_READONLY_CTX(ctx, class_name, member_name, callback_get) \
     AddScriptingClassMember(ctx, class_name, member_name, callback_get, [](FunctionContext *context, ClassData *data) -> void {})
 
-void AddScriptingClassMember(EContext *ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
-void AddScriptingClassMemberPre(EContext *ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
-void AddScriptingClassMemberPost(EContext *ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
+void AddScriptingClassMember(EContext* ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
+void AddScriptingClassMemberPre(EContext* ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
+void AddScriptingClassMemberPost(EContext* ctx, std::string class_name, std::string member_name, ScriptingClassFunctionCallback callback_get, ScriptingClassFunctionCallback callback_set);
 
 #endif

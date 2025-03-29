@@ -11,3 +11,6 @@
 [submodule "vendor/dynlibutils"]
 	path = vendor/dynlibutils
 	url = https://github.com/komashchenko/DynLibUtils
+[submodule "vendor/lua-rapidjson"]
+	path = vendor/lua-rapidjson
+	url = https://github.com/xpol/lua-rapidjson

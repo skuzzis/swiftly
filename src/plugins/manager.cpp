@@ -42,8 +42,8 @@ void PluginsManager::LoadPlugins(std::string directory)
 void PluginsManager::UnloadPlugins()
 {
     std::vector<std::string> pluginNames;
-    for (PluginObject plugin : pluginsList)
-        pluginNames.push_back(plugin.GetName());
+    for (PluginObject* plugin : pluginsList)
+        pluginNames.push_back(plugin->GetName());
 
     for (std::string plugin_name : pluginNames)
         UnloadPlugin(plugin_name);
@@ -66,7 +66,7 @@ void PluginsManager::LoadPlugin(std::string plugin_name)
         {
             ct = ContextKinds::Lua;
             break;
-        } 
+        }
         else if (ends_with(file, ".js"))
         {
             ct = ContextKinds::JavaScript;
@@ -80,7 +80,7 @@ void PluginsManager::LoadPlugin(std::string plugin_name)
         return;
     }
 
-    pluginsList.push_back(PluginObject(plugin_name, ct));
+    pluginsList.push_back(new PluginObject(plugin_name, ct));
     pluginsMap.insert({ plugin_name, pluginsList.back() });
 }
 
@@ -91,8 +91,9 @@ void PluginsManager::UnloadPlugin(std::string plugin_name)
 
     auto plugin = pluginsMap.at(plugin_name);
 
-    for(auto it = pluginsList.begin(); it != pluginsList.end(); ++it) {
-        if((*it).GetName() == plugin_name)
+    for (auto it = pluginsList.begin(); it != pluginsList.end(); ++it)
+    {
+        if ((*it)->GetName() == plugin_name)
             pluginsList.erase(it);
     }
 
@@ -101,24 +102,34 @@ void PluginsManager::UnloadPlugin(std::string plugin_name)
 
 void PluginsManager::StartPlugins()
 {
-    for (PluginObject plugin : pluginsList)
-        if (!StartPlugin(plugin.GetName()))
-            StopPlugin(plugin.GetName(), true);
+    for (PluginObject* plugin : pluginsList)
+        if (!StartPlugin(plugin->GetName()))
+            StopPlugin(plugin->GetName(), true);
 
-    // PluginEvent* event = new PluginEvent("core", nullptr, nullptr);
-    // ExecuteEvent("core", "OnAllPluginsLoaded", encoders::msgpack::SerializeToString({}), event);
-    // delete event;
+    ExecuteEvent("core", "OnAllPluginsLoaded", {}, {});
     alreadyStarted = true;
 
     // for(auto extension : extManager->GetExtensionsList())
-        // if(extension->IsLoaded())
-            // extension->GetAPI()->AllPluginsLoaded();
+    // if(extension->IsLoaded())
+    // extension->GetAPI()->AllPluginsLoaded();
+}
+
+EventResult PluginsManager::ExecuteEvent(std::string invokedBy, std::string eventName, std::vector<std::any> eventPayload, ClassData* eventObject)
+{
+    for (std::size_t i = 0; i < pluginsList.size(); i++)
+    {
+        EventResult result = pluginsList[i]->TriggerEvent(invokedBy, eventName, eventPayload, eventObject);
+        if (result != EventResult::Continue)
+            return result;
+    }
+
+    return EventResult::Continue;
 }
 
 void PluginsManager::StopPlugins(bool destroyStates)
 {
-    for (PluginObject plugin : pluginsList)
-        StopPlugin(plugin.GetName(), destroyStates);
+    for (PluginObject* plugin : pluginsList)
+        StopPlugin(plugin->GetName(), destroyStates);
 }
 
 bool PluginsManager::StartPlugin(std::string plugin_name)
@@ -126,21 +137,19 @@ bool PluginsManager::StartPlugin(std::string plugin_name)
     if (!PluginExists(plugin_name))
         return false;
 
-    PluginObject plugin = pluginsMap.at(plugin_name);
-    if (plugin.GetPluginState() == PluginState_t::Started)
+    PluginObject* plugin = pluginsMap.at(plugin_name);
+    if (plugin->GetPluginState() == PluginState_t::Started)
         return true;
 
-    if (!plugin.LoadScriptingEnvironment())
+    if (!plugin->LoadScriptingEnvironment())
         return false;
-    if (!plugin.ExecuteStart())
+    if (!plugin->ExecuteStart())
         return false;
-    plugin.SetPluginState(PluginState_t::Started);
+    plugin->SetPluginState(PluginState_t::Started);
 
     if (alreadyStarted)
     {
-        // PluginEvent* event = new PluginEvent("core", nullptr, nullptr);
-        // plugin->TriggerEvent("core", "OnAllPluginsLoaded", encoders::msgpack::SerializeToString({}), event);
-        // delete event;
+        plugin->TriggerEvent("core", "OnAllPluginsLoaded", {}, {});
     }
 
     return true;
@@ -151,35 +160,37 @@ void PluginsManager::StopPlugin(std::string plugin_name, bool destroyStates)
     if (!PluginExists(plugin_name))
         return;
 
-    PluginObject plugin = pluginsMap.at(plugin_name);
-    if (plugin.GetPluginState() == PluginState_t::Stopped)
+    PluginObject* plugin = pluginsMap.at(plugin_name);
+    if (plugin->GetPluginState() == PluginState_t::Stopped)
         return;
 
-    if (!plugin.ExecuteStop())
+    if (!plugin->ExecuteStop())
         return;
 
-    if (destroyStates) {
-        plugin.DestroyScriptingEnvironment();
-        plugin.SetPluginState(PluginState_t::Stopped);
+    if (destroyStates)
+    {
+        plugin->DestroyScriptingEnvironment();
+        plugin->SetPluginState(PluginState_t::Stopped);
     }
     // g_MenuManager->UnregisterPluginMenus(plugin_name);
 }
 
-std::optional<PluginObject> PluginsManager::FetchPlugin(std::string name)
+PluginObject* PluginsManager::FetchPlugin(std::string name)
 {
     if (!PluginExists(name))
-        return {};
+        return nullptr;
 
     return pluginsMap[name];
 }
 
-std::vector<PluginObject> PluginsManager::GetPluginsList()
+std::vector<PluginObject*> PluginsManager::GetPluginsList()
 {
     return pluginsList;
 }
 
 std::string PluginsManager::GetPluginBasePath(std::string plugin_name)
 {
-    if (pluginBasePaths.find(plugin_name) == pluginBasePaths.end()) return "addons/swiftly/plugins";
+    if (pluginBasePaths.find(plugin_name) == pluginBasePaths.end())
+        return "addons/swiftly/plugins";
     return pluginBasePaths[plugin_name];
 }

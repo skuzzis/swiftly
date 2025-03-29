@@ -3,9 +3,13 @@
 
 #include <set>
 #include <string>
+#include <any>
+#include <vector>
+#include <optional>
 
 #include <embedder/src/embedder.h>
 #include <types/PluginState.h>
+#include <types/EventResult.h>
 
 class PluginObject
 {
@@ -13,9 +17,12 @@ private:
     std::string name;
     PluginState_t state = PluginState_t::Stopped;
     std::string loadError = "";
-    std::set<std::string> eventHandlers;
-    ContextKinds kind;
+
     EContext* ctx = nullptr;
+    ContextKinds kind;
+
+    std::set<std::string> eventHandlers;
+    EValue* eventFunctionPtr = nullptr;
 
 public:
     PluginObject(std::string m_name, ContextKinds m_kind);
@@ -44,13 +51,13 @@ public:
     std::string GetVersion();
     std::string GetPlName();
 
-    // @todo Events & Commands
+    // @todo Commands
 
-    // EventResult TriggerEvent(std::string invokedBy, std::string eventName, std::string eventPayload, PluginEvent* event);
-    // void RegisterEventHandler(void* functionPtr);
-    // void RegisterEventHandling(std::string eventName);
-    // void UnregisterEventHandling(std::string eventName);
-    
+    EventResult TriggerEvent(std::string invokedBy, std::string eventName, std::vector<std::any> eventPayload, ClassData* eventObject);
+    void RegisterEventHandler(EValue* functionPtr);
+    void RegisterEventHandling(std::string eventName);
+    void UnregisterEventHandling(std::string eventName);
+
     // void ExecuteCommand(void* functionPtr, std::string name, int slot, std::vector<std::string> args, bool silent, std::string prefix);
 
     EContext* GetContext();

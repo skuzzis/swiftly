@@ -112,15 +112,15 @@ void PLUGIN_PRINT(std::string category, std::string str)
 {
     std::string final_string = string_format("%s %s[%s]%s ", PREFIX, GetTerminalStringColor(category).c_str(), category.c_str(), terminalColors.at("{DEFAULT}").c_str());
     auto splitted = explode(str, "\n");
-    for(int i = 0; i < splitted.size(); i++) {
-        if(splitted[i] == "" && i+1 == splitted.size()) break;
+    for (int i = 0; i < splitted.size(); i++) {
+        if (splitted[i] == "" && i + 1 == splitted.size()) break;
         META_CONPRINTF("%s%s\n", final_string.c_str(), splitted[i].c_str());
     }
 
     if (g_Config.FetchValue<bool>("core.logging.save_core_messages")) {
-        if (g_Logger.FetchLogger("core").has_value()) {
+        if (g_Logger.FetchLogger("core")) {
             str.pop_back();
-            g_Logger.FetchLogger("core").value().WriteLog(LogType_t::Common, "[" + category + "] " + str);
+            g_Logger.FetchLogger("core")->WriteLog(LogType_t::Common, "[" + category + "] " + str);
         }
     }
 }
@@ -138,16 +138,16 @@ void PLUGIN_PRINTF(std::string category, std::string str, ...)
 
     std::string final_prefix = string_format("%s %s[%s]%s ", PREFIX, GetTerminalStringColor(category).c_str(), category.c_str(), terminalColors.at("{DEFAULT}").c_str());
     auto splitted = explode(fstr, "\n");
-    for(int i = 0; i < splitted.size(); i++) {
-        if(splitted[i] == "" && i+1 == splitted.size()) break;
+    for (int i = 0; i < splitted.size(); i++) {
+        if (splitted[i] == "" && i + 1 == splitted.size()) break;
         META_CONPRINTF("%s%s\n", final_prefix.c_str(), splitted[i].c_str());
     }
 
     if (g_Config.FetchValue<bool>("core.logging.save_core_messages")) {
-        if (g_Logger.FetchLogger("core").has_value()) {
+        if (g_Logger.FetchLogger("core")) {
             std::string buf = buffer;
             buf.pop_back();
-            g_Logger.FetchLogger("core").value().WriteLog(LogType_t::Common, "[" + category + "] " + buf);
+            g_Logger.FetchLogger("core")->WriteLog(LogType_t::Common, "[" + category + "] " + buf);
         }
     }
 }
@@ -167,7 +167,7 @@ std::string replace(std::string str, const std::string from, const std::string t
 
 std::vector<std::string> explode(std::string s, std::string delimiter)
 {
-    if(s.size() == 0) return {};
+    if (s.size() == 0) return {};
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
     std::vector<std::string> res;
@@ -185,7 +185,7 @@ std::vector<std::string> explode(std::string s, std::string delimiter)
 
 std::set<std::string> explodeToSet(std::string str, std::string delimiter)
 {
-    if(str.size() == 0) return {};
+    if (str.size() == 0) return {};
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
     std::set<std::string> res;
@@ -264,7 +264,7 @@ std::string get_uuid()
         (genrand() & 0xFFFF), (genrand() & 0xFFFF), (genrand() & 0xFFFF));
 }
 
-characterset_t cset{""};
+characterset_t cset{ "" };
 
 std::vector<std::string> TokenizeCommand(std::string cmd)
 {

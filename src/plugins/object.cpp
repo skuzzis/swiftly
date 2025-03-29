@@ -14,6 +14,65 @@ PluginObject::PluginObject(std::string m_name, ContextKinds m_kind)
 
 PluginObject::~PluginObject()
 {
+    if (eventFunctionPtr)
+    {
+        delete eventFunctionPtr;
+    }
+}
+
+void PluginObject::RegisterEventHandler(EValue* functionPtr)
+{
+    if (!functionPtr->isFunction())
+        return;
+
+    eventFunctionPtr = functionPtr;
+}
+
+void PluginObject::RegisterEventHandling(std::string eventName)
+{
+    if (eventHandlers.find(eventName) == eventHandlers.end())
+        eventHandlers.insert(eventName);
+}
+
+void PluginObject::UnregisterEventHandling(std::string eventName)
+{
+    auto it = eventHandlers.find(eventName);
+    if (it != eventHandlers.end())
+        eventHandlers.erase(it);
+}
+
+EventResult PluginObject::TriggerEvent(std::string invokedBy, std::string eventName, std::vector<std::any> eventPayload, ClassData* eventObject)
+{
+    if (GetPluginState() == PluginState_t::Stopped && eventName != "OnPluginStart" && eventName != "OnAllPluginsLoaded")
+        return EventResult::Continue;
+
+    if (!eventFunctionPtr)
+        return EventResult::Continue;
+
+    if (eventHandlers.find(eventName) == eventHandlers.end())
+        return EventResult::Continue;
+
+    EventResult response = EventResult::Continue;
+    try
+    {
+        if (!eventObject) eventObject = new ClassData({ { "plugin_name", invokedBy } }, "Event", ctx);
+        auto value = (*eventFunctionPtr)(eventObject, eventName, eventPayload);
+        if (value.isNumber())
+        {
+            int result = value.cast<int>();
+            if (result < (int)EventResult::Continue || result >(int)EventResult::Stop)
+                response = EventResult::Continue;
+            else
+                response = (EventResult)result;
+        }
+    }
+    catch (EException& e)
+    {
+        PRINTF("An error has occured while trying to execute event '%s' in plugin '%s'.\nError: %s", eventName.c_str(), GetName().c_str(), e.what());
+        return EventResult::Continue;
+    }
+
+    return response;
 }
 
 std::string PluginObject::GetName()
@@ -112,7 +171,7 @@ bool PluginObject::LoadScriptingEnvironment()
                     return false;
                 }
             }
-            catch (EException &e)
+            catch (EException& e)
             {
                 std::string error = e.what();
                 PRINTF("Failed to load plugin file '%s'.\n", file.c_str());
@@ -143,7 +202,7 @@ bool PluginObject::LoadScriptingEnvironment()
                     return false;
                 }
             }
-            catch (EException &e)
+            catch (EException& e)
             {
                 std::string error = e.what();
                 PRINTF("Failed to load plugin file '%s'.\n", file.c_str());
@@ -202,9 +261,7 @@ bool PluginObject::ExecuteStart()
         return false;
     }
 
-    // PluginEvent* event = new PluginEvent("core", nullptr, nullptr);
-    // TriggerEvent("core", "OnPluginStart", encoders::msgpack::SerializeToString({}), event);
-    // delete event;
+    TriggerEvent("core", "OnPluginStart", {}, {});
 
     if (GetLoadError() != "")
         return false;
@@ -224,9 +281,7 @@ bool PluginObject::ExecuteStop()
     //         }
     //     }
 
-    // PluginEvent* event = new PluginEvent("core", nullptr, nullptr);
-    // TriggerEvent("core", "OnPluginStop", encoders::msgpack::SerializeToString({}), event);
-    // delete event;
+    TriggerEvent("core", "OnPluginStop", {}, {});
 
     return true;
 }
@@ -236,7 +291,7 @@ ContextKinds PluginObject::GetKind()
     return kind;
 }
 
-EContext *PluginObject::GetContext()
+EContext* PluginObject::GetContext()
 {
     return ctx;
 }

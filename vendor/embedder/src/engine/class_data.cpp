@@ -12,14 +12,15 @@ ClassData::ClassData(std::map<std::string, std::any> data, std::string className
 
 ClassData::~ClassData()
 {
-    std::string str_key = m_className + " ~" + m_className; 
-    void *func = m_ctx->GetClassFunctionCall(str_key);
+    if (!m_ctx) return;
+    std::string str_key = m_className + " ~" + m_className;
+    void* func = m_ctx->GetClassFunctionCall(str_key);
     if (!func) return;
 
     ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
     FunctionContext fctx(str_key, m_ctx->GetKind(), m_ctx, {}, 0);
-    FunctionContext *fptr = &fctx;
-    ClassData *data = this;
+    FunctionContext* fptr = &fctx;
+    ClassData* data = this;
     bool ignoreCustomReturn = false;
 
     auto functionPreCalls = m_ctx->GetClassFunctionPreCalls();
@@ -31,7 +32,7 @@ ClassData::~ClassData()
     for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
         if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
         {
-            for (void *func : it->second)
+            for (void* func : it->second)
             {
                 reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
                 if (fctx.ShouldStopExecution())
@@ -46,12 +47,12 @@ ClassData::~ClassData()
 
     if (!stopExecution) {
         cb(fptr, data);
-    
+
         // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
         for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
             if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
             {
-                for (void *func : it->second)
+                for (void* func : it->second)
                 {
                     reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
                     if (fctx.ShouldStopExecution())

@@ -4,17 +4,16 @@
 #include <map>
 #include <string>
 #include <server/configuration/configuration.h>
-#include <optional>
 
 #include "log.h"
 
 class Logger
 {
 private:
-    std::map<std::string, Log> m_Loggers;
+    std::map<std::string, Log*> m_Loggers;
 
 public:
-    std::optional<Log> FetchLogger(std::string key);
+    Log* FetchLogger(std::string key);
     void AddLogger(std::string key, bool plugin);
     void RemoveLogger(std::string key);
 };

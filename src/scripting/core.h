@@ -5,6 +5,7 @@
 #include <embedder/src/embedder.h>
 
 #include <functional>
+#include "stack.h"
 
 std::string FetchPluginName(EContext* ctx);
 #define FetchPluginByState(state) g_pluginManager.FetchPlugin(FetchPluginName(state))

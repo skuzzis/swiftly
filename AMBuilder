@@ -10,6 +10,11 @@ for sdk_target in MMSPlugin.sdk_targets:
 
   binary = MMSPlugin.HL2Library(builder, cxx, MMSPlugin.plugin_name, sdk)
 
+  for root, dirs, files in os.walk(os.path.join(builder.sourcePath, "vendor", "lua-rapidjson", "src")):
+    for _file in files:
+      if fnmatch.fnmatch(_file, '*.cpp'):
+        binary.sources.append(os.path.join(root, _file).replace("\\", "/"))
+
   for root, dirs, files in os.walk(os.path.join(builder.sourcePath, "vendor", "embedder", "src")):
 	  for _file in files:
 		  if fnmatch.fnmatch(_file, '*.cpp'):
@@ -30,6 +35,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/core/configuration/setup.cpp',
     'src/core/console/console.cpp',
 
+    'src/engine/gameevents/gameevents.cpp',
+
     'src/entities/system.cpp',
 
     'src/filesystem/files/files.cpp',
@@ -42,7 +49,9 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/plugins/manager.cpp',
     'src/plugins/object.cpp',
 
+    'src/scripting/engine/events.cpp',
     'src/scripting/core.cpp',
+    'src/scripting/stack.cpp',
     
     'src/sdk/access.cpp',
     'src/sdk/schema.cpp',
@@ -182,6 +191,7 @@ for sdk_target in MMSPlugin.sdk_targets:
 
   binary.compiler.cxxincludes += [
     os.path.join(builder.sourcePath, 'vendor'),
+    os.path.join(builder.sourcePath, 'vendor', 'lua-rapidjson', 'rapidjson', 'include'),
     os.path.join(builder.sourcePath, 'vendor', 'bzip2', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include'),
     
     os.path.join(builder.sourcePath, 'src'),

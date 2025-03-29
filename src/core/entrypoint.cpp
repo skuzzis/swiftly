@@ -9,6 +9,8 @@
 #include <core/configuration/setup.h>
 #include <core/console/console.h>
 
+#include <engine/gameevents/gameevents.h>
+
 #include <server/configuration/configuration.h>
 #include <server/translations/translations.h>
 
@@ -44,6 +46,7 @@ CSchemaSystem* g_pSchemaSystem2 = nullptr;
 CGameEntitySystem* g_pGameEntitySystem = nullptr;
 IGameResourceService* g_pGameResourceService = nullptr;
 CEntitySystem* g_pEntitySystem = nullptr;
+IGameEventManager2* g_gameEventManager = nullptr;
 
 //////////////////////////////////////////////////////////////
 /////////////////      Internal Variables      //////////////
@@ -55,18 +58,21 @@ Translations g_translations;
 GameData g_GameData;
 SDKAccess g_sdk;
 PluginsManager g_pluginManager;
+EventManager g_eventManager;
+
+std::map<std::string, std::string> gameEventsRegister;
 
 //////////////////////////////////////////////////////////////
 /////////////////          Core Class          //////////////
 ////////////////////////////////////////////////////////////
 
 PLUGIN_EXPOSE(SwiftlyS2, g_Plugin);
-bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool late)
+bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool late)
 {
     PLUGIN_SAVEVARS();
     g_SMAPI->AddListener(this, this);
 
-    if(GetGameName() == "unknown") {
+    if (GetGameName() == "unknown") {
         ismm->Format(error, maxlen, "Unknown game detected.");
         return false;
     }
@@ -80,7 +86,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
 
     HandleConfigExamples();
 
-    if(g_Config.LoadConfiguration())
+    if (g_Config.LoadConfiguration())
         PRINT("The configurations has been succesfully loaded.\n");
     else
         PRINTRET("Failed to load configurations. The framework will not work.\n", false);
@@ -94,6 +100,8 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
     g_GameData.LoadGameData();
     g_GameData.PerformPatches();
 
+    g_eventManager.Initialize();
+
     g_translations.LoadTranslations();
 
     g_pluginManager.LoadPlugins("");
@@ -104,10 +112,12 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, boo
     return true;
 }
 
-bool SwiftlyS2::Unload(char *error, size_t maxlen)
+bool SwiftlyS2::Unload(char* error, size_t maxlen)
 {
     g_pluginManager.StopPlugins(false);
     g_pluginManager.UnloadPlugins();
+
+    g_eventManager.Shutdown();
     return true;
 }
 
@@ -116,7 +126,7 @@ void SwiftlyS2::AllPluginsLoaded()
 
 }
 
-void SwiftlyS2::OnLevelInit( char const *pMapName, char const *pMapEntities, char const *pOldLevel, char const *pLandmarkName, bool loadGame, bool background )
+void SwiftlyS2::OnLevelInit(char const* pMapName, char const* pMapEntities, char const* pOldLevel, char const* pLandmarkName, bool loadGame, bool background)
 {
 
 }
