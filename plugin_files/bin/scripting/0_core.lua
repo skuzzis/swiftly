@@ -1,1 +1,2 @@
 server = Server()
+logger = Logger()
