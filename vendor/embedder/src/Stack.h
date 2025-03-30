@@ -1220,7 +1220,6 @@ struct Stack<ClassData*>
         auto proto = ctx->GetClassPrototype(value->GetClassname());
         JS_SetClassProto(L, id, proto);
         auto ret = JS_NewObjectProtoClass(L, JS_GetClassProto(L, id), id);
-        JS_FreeValue(L, proto);
 
         if (JS_IsException(ret))
         {

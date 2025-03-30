@@ -60,6 +60,8 @@ public:
             return value;
         }
     }
+
+    bool HasData(std::string key);
 };
 
 #endif

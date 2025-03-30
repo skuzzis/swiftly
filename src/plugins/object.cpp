@@ -30,8 +30,9 @@ void PluginObject::RegisterEventHandler(EValue* functionPtr)
 
 void PluginObject::RegisterEventHandling(std::string eventName)
 {
-    if (eventHandlers.find(eventName) == eventHandlers.end())
+    if (eventHandlers.find(eventName) == eventHandlers.end()) {
         eventHandlers.insert(eventName);
+    }
 }
 
 void PluginObject::UnregisterEventHandling(std::string eventName)
@@ -87,7 +88,7 @@ PluginState_t PluginObject::GetPluginState()
 
 void PluginObject::SetPluginState(PluginState_t state)
 {
-    state = state;
+    this->state = state;
 }
 
 std::string PluginObject::GetLoadError()

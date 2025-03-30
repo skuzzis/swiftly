@@ -1,6 +1,7 @@
 #ifndef _scripting_core_h
 #define _scripting_core_h
 
+#include <core/entrypoint.h>
 #include <plugins/manager.h>
 #include <embedder/src/embedder.h>
 

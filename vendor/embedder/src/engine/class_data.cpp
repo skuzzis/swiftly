@@ -76,3 +76,8 @@ std::string ClassData::GetClassname()
 {
     return m_className;
 }
+
+bool ClassData::HasData(std::string key)
+{
+    return m_classData.find(key) != m_classData.end();
+}
