@@ -25,6 +25,9 @@
 
 #include <schemasystem/schemasystem.h>
 
+#include <public/tier0/icommandline.h>
+#include <public/steam/steam_gameserver.h>
+
 //////////////////////////////////////////////////////////////
 /////////////////       SourceHook Hooks       //////////////
 ////////////////////////////////////////////////////////////
@@ -34,6 +37,8 @@ class GameSessionConfiguration_t
 };
 
 SH_DECL_HOOK3_void(INetworkServerService, StartupServer, SH_NOATTRIB, 0, const GameSessionConfiguration_t&, ISource2WorldSession*, const char*);
+SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIActivated, SH_NOATTRIB, 0);
+SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIDeactivated, SH_NOATTRIB, 0);
 
 //////////////////////////////////////////////////////////////
 /////////////////  Core Variables & Functions  //////////////
@@ -47,6 +52,8 @@ CGameEntitySystem* g_pGameEntitySystem = nullptr;
 IGameResourceService* g_pGameResourceService = nullptr;
 CEntitySystem* g_pEntitySystem = nullptr;
 IGameEventManager2* g_gameEventManager = nullptr;
+
+CSteamGameServerAPIContext g_SteamAPI;
 
 //////////////////////////////////////////////////////////////
 /////////////////      Internal Variables      //////////////
@@ -84,6 +91,9 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     GET_V_IFACE_CURRENT(GetEngineFactory, g_pGameResourceService, IGameResourceService, GAMERESOURCESERVICESERVER_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetServerFactory, server, ISource2Server, INTERFACEVERSION_SERVERGAMEDLL);
 
+    SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
+    SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
+
     HandleConfigExamples();
 
     if (g_Config.LoadConfiguration())
@@ -107,6 +117,12 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     g_pluginManager.LoadPlugins("");
     g_pluginManager.StartPlugins();
 
+    if (late)
+    {
+        g_eventManager.RegisterGameEvents();
+        g_SteamAPI.Init();
+    }
+
     PRINT("Succesfully started.\n");
 
     return true;
@@ -118,6 +134,10 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
     g_pluginManager.UnloadPlugins();
 
     g_eventManager.Shutdown();
+
+    SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
+    SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
+
     return true;
 }
 
@@ -134,6 +154,21 @@ void SwiftlyS2::OnLevelInit(char const* pMapName, char const* pMapEntities, char
 void SwiftlyS2::OnLevelShutdown()
 {
 
+}
+
+void SwiftlyS2::Hook_GameServerSteamAPIActivated()
+{
+    if (!CommandLine()->HasParm("-dedicated") || g_SteamAPI.SteamUGC())
+        return;
+
+    g_SteamAPI.Init();
+
+    RETURN_META(MRES_IGNORED);
+}
+
+void SwiftlyS2::Hook_GameServerSteamAPIDeactivated()
+{
+    RETURN_META(MRES_IGNORED);
 }
 
 bool SwiftlyS2::Pause(char* error, size_t maxlen)

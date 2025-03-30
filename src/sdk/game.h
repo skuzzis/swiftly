@@ -4,5 +4,6 @@
 #include <string>
 
 std::string GetGameName();
+int GetMaxGameClients();
 
 #endif

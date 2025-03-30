@@ -38,6 +38,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/engine/gameevents/gameevents.cpp',
 
     'src/entities/system.cpp',
+    'src/entities/listener.cpp',
 
     'src/filesystem/files/files.cpp',
     'src/filesystem/logs/logger.cpp',
@@ -50,6 +51,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/plugins/object.cpp',
 
     'src/scripting/engine/events.cpp',
+    'src/scripting/engine/server.cpp',
     'src/scripting/core.cpp',
     'src/scripting/stack.cpp',
     

@@ -6,6 +6,8 @@
 #include <sh_vector.h>
 #include <public/entity2/entitysystem.h>
 #include <public/iserver.h>
+#include <public/steam/steam_api_common.h>
+#include <public/steam/isteamugc.h>
 
 class SwiftlyS2 : public ISmmPlugin, public IMetamodListener
 {
@@ -15,6 +17,8 @@ public:
 	bool Pause(char* error, size_t maxlen);
 	bool Unpause(char* error, size_t maxlen);
 	void AllPluginsLoaded();
+	void Hook_GameServerSteamAPIActivated();
+    void Hook_GameServerSteamAPIDeactivated();
 
 	void OnLevelInit(char const* pMapName, char const* pMapEntities, char const* pOldLevel, char const* pLandmarkName, bool loadGame, bool background);
 	void OnLevelShutdown();
@@ -37,6 +41,7 @@ extern CGameEntitySystem* g_pGameEntitySystem;
 extern IGameResourceService* g_pGameResourceService;
 extern CEntitySystem* g_pEntitySystem;
 extern IGameEventManager2* g_gameEventManager;
+extern CSteamGameServerAPIContext g_SteamAPI;
 PLUGIN_GLOBALVARS();
 
 #endif

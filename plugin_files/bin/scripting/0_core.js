@@ -1,0 +1,1 @@
+globalThis.server = Server()

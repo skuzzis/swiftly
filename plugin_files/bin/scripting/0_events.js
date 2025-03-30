@@ -10,7 +10,7 @@ const LoadEventFile = (global) => {
         const handlers = eventHandlers[eventName]
         for (let i = 0; i < handlers.length; i++) {
             if ((typeof handlers[i].handle) == "function") {
-                const result = (handlers[i].handle.apply(global, eventData) || 0);
+                const result = (handlers[i].handle.apply(null, eventData) || 0);
                 if (result != 0) return result
             }
         }
