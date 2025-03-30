@@ -52,6 +52,10 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/scripting/engine/events.cpp',
     'src/scripting/engine/server.cpp',
+
+    'src/scripting/filesystem/files.cpp',
+    'src/scripting/filesystem/logger.cpp',
+
     'src/scripting/core.cpp',
     'src/scripting/stack.cpp',
     
