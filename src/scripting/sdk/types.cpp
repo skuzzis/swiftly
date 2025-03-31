@@ -41,5 +41,7 @@ LoadScriptingComponent(sdktypes, [](PluginObject plugin, EContext* ctx) -> void 
 
         context->StopExecution();
         context->SetReturn(types[class_name][member_name]);
-    }, [](FunctionContext* context, ClassData* data) -> void {});
+    }, [](FunctionContext* context, ClassData* data) -> void {
+        context->StopExecution();
+    });
 })

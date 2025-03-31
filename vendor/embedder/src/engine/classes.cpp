@@ -9,6 +9,13 @@ int LuaMemberCallbackIndex(lua_State* L, std::string str_key);
 int LuaMemberCallbackNewIndex(lua_State* L, std::string str_key);
 int LuaClassFunctionCall(lua_State *L);
 
+bool str_startswith(std::string value, std::string starting)
+{
+    if (value.size() < starting.size())
+        return false;
+    return std::equal(starting.begin(), starting.end(), value.begin());
+}
+
 int LuaClassIndex(lua_State* L)
 {
     auto ctx = GetContextByState(L);
@@ -265,6 +272,14 @@ void AddScriptingClassFunction(EContext *ctx, std::string class_name, std::strin
             lua_pushstring(L, func_key.c_str());
             lua_pushcclosure(L, LuaClassFunctionCall, 1);
             lua_setglobal(L, class_name.c_str());
+        } else if(str_startswith(function_name, "__")) {
+            luaL_getmetatable(L, class_name.c_str());
+            
+            lua_pushstring(L, func_key.c_str());
+            lua_pushcclosure(L, LuaClassFunctionCall, 1);
+            rawsetfield(L, -2, function_name.c_str());
+            
+            lua_pop(L, 1);
         }
     }
     else if (ctx->GetKind() == ContextKinds::JavaScript)
