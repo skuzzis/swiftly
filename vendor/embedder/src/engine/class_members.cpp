@@ -9,11 +9,6 @@ int LuaMemberCallbackIndex(lua_State* L, std::string str_key)
 {
     auto ctx = GetContextByState(L);
 
-    void *func = ctx->GetClassMemberCalls(str_key).first;
-    if (!func)
-        return 0;
-
-    ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx, true, false, true);
     FunctionContext *fptr = &fctx;
 
@@ -44,7 +39,11 @@ int LuaMemberCallbackIndex(lua_State* L, std::string str_key)
     if (stopExecution)
         goto membergetcbendlua;
 
-    cb(fptr, data);
+    void *func = ctx->GetClassMemberCalls(str_key).first;
+    if (func) {
+        ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
+        cb(fptr, data);
+    }
 
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
@@ -76,11 +75,6 @@ int LuaMemberCallbackNewIndex(lua_State* L, std::string str_key)
 {
     auto ctx = GetContextByState(L);
 
-    void *func = ctx->GetClassMemberCalls(str_key).second;
-    if (!func)
-        return 0;
-
-    ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx, true, false, true);
     FunctionContext *fptr = &fctx;
 
@@ -111,7 +105,11 @@ int LuaMemberCallbackNewIndex(lua_State* L, std::string str_key)
     if (stopExecution)
         goto membersetcbendlua;
 
-    cb(fptr, data);
+    void *func = ctx->GetClassMemberCalls(str_key).second;
+    if (func) {
+        ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
+        cb(fptr, data);
+    }
 
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
@@ -144,11 +142,6 @@ JSValue JSMemberGetCallback(JSContext *L, JSValue this_val, int argc, JSValue *a
     auto ctx = GetContextByState(L);
     std::string str_key = Stack<std::string>::getJS(ctx, func_data[0]);
 
-    void *func = ctx->GetClassMemberCalls(str_key).first;
-    if (!func)
-        return JS_ThrowSyntaxError(L, "Unknown member: '%s'.", str_split(str_key, " ").back());
-
-    ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx, argv, argc);
     FunctionContext *fptr = &fctx;
 
@@ -178,7 +171,11 @@ JSValue JSMemberGetCallback(JSContext *L, JSValue this_val, int argc, JSValue *a
     if (stopExecution)
         goto membergetcbendjs;
 
-    cb(fptr, data);
+    void *func = ctx->GetClassMemberCalls(str_key).first;
+    if (func) {
+        ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
+        cb(fptr, data);
+    }
 
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
@@ -208,11 +205,6 @@ JSValue JSMemberSetCallback(JSContext *L, JSValue this_val, int argc, JSValue *a
     auto ctx = GetContextByState(L);
     std::string str_key = Stack<std::string>::getJS(ctx, func_data[0]);
 
-    void *func = ctx->GetClassMemberCalls(str_key).second;
-    if (!func)
-        return JS_ThrowSyntaxError(L, "Unknown member: '%s'.", str_split(str_key, " ").back());
-
-    ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx, argv, argc);
     FunctionContext *fptr = &fctx;
 
@@ -242,7 +234,11 @@ JSValue JSMemberSetCallback(JSContext *L, JSValue this_val, int argc, JSValue *a
     if (stopExecution)
         goto membersetcbendjs;
 
-    cb(fptr, data);
+    void *func = ctx->GetClassMemberCalls(str_key).second;
+    if (func) {
+        ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
+        cb(fptr, data);
+    }
 
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)

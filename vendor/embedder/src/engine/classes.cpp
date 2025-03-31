@@ -46,12 +46,7 @@ int LuaClassFunctionCall(lua_State *L)
     std::string str_key = lua_tostring(L, lua_upvalueindex(1));
     auto ctx = GetContextByState(L);
 
-    void *func = ctx->GetClassFunctionCall(str_key);
-    if (!func)
-        return 0;
-
     auto splits = str_split(str_key, " ");
-    ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx, splits[0] != splits[1], splits[0] == splits[1], false);
     FunctionContext *fptr = &fctx;
 
@@ -97,7 +92,11 @@ int LuaClassFunctionCall(lua_State *L)
     if (stopExecution)
         goto classfunctioncbend;
 
-    cb(fptr, data);
+    void *func = ctx->GetClassFunctionCall(str_key);
+    if (func) {
+        ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
+        cb(fptr, data);
+    }
 
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
@@ -133,11 +132,6 @@ JSValue JSClassCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv,
     auto ctx = GetContextByState(L);
     std::string str_key = Stack<std::string>::getJS(ctx, func_data[0]);
 
-    void *func = ctx->GetClassFunctionCall(str_key);
-    if (!func)
-        return JS_ThrowSyntaxError(L, "Unknown function: '%s'.", str_split(str_key, " ").back());
-
-    ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx, argv, argc);
     FunctionContext *fptr = &fctx;
     ClassData *data = nullptr;
@@ -186,7 +180,11 @@ JSValue JSClassCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv,
     if (stopExecution)
         goto functionclasscbendjs;
 
-    cb(fptr, data);
+    void *func = ctx->GetClassFunctionCall(str_key);
+    if (func) {
+        ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
+        cb(fptr, data);
+    }
 
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)

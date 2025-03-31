@@ -48,7 +48,7 @@ void SDKAccess::LoadSDKData()
         }
     }
 
-    PRINTF("Succesfully loaded %lld SDK fields.\n", fieldNames.size());
+    PRINTF("Succesfully loaded %lld SDK fields and %lld classes.\n", fieldNames.size(), classes.size());
 
     j = encoders::json::FromString(Files::Read(gamedata_path + "sdk_types.json"), gamedata_path + "sdk_types.json");
     if(!j.IsObject()) return;

@@ -31,7 +31,7 @@ void SetupScriptingEnvironment(PluginObject plugin, EContext* ctx)
         pluginNamesMap[plugin.GetName()] = ctx;
     }
 
-    ctx->RegisterLuaLib("json", luaopen_rapidjson);
+    if(ctx->GetKind() == ContextKinds::Lua) ctx->RegisterLuaLib("json", luaopen_rapidjson);
 
     ADD_FUNCTION_NS(ctx->GetKind() == ContextKinds::Lua ? "_G" : "console", ctx->GetKind() == ContextKinds::Lua ? "print" : "log", [](FunctionContext* context) -> void {
         std::string prefix = TerminalProcessColor(string_format("[Swiftly] %s[%s]{DEFAULT} ", GetTerminalStringColor(FetchPluginName(context->GetPluginContext())).c_str(), ("plugin:" + FetchPluginName(context->GetPluginContext())).c_str()));

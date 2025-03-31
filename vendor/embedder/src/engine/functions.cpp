@@ -9,45 +9,43 @@ int LuaFunctionCallback(lua_State *L)
     std::string str_key = lua_tostring(L, lua_upvalueindex(1));
     auto ctx = GetContextByState(L);
 
-    void *func = ctx->GetFunctionCall(str_key);
-    if (!func)
-        return 0;
-
-    ScriptingFunctionCallback cb = reinterpret_cast<ScriptingFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx);
     FunctionContext *fptr = &fctx;
-
+    
     auto functionPreCalls = ctx->GetFunctionPreCalls();
     auto functionPostCalls = ctx->GetFunctionPostCalls();
     bool stopExecution = false;
-
+    
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+    if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+    {
+        for (void *func : it->second)
         {
-            for (void *func : it->second)
+            reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
+            if (fctx.ShouldStopExecution())
             {
-                reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
-                if (fctx.ShouldStopExecution())
-                {
-                    stopExecution = true;
-                    break;
-                }
-            }
-            if (stopExecution)
+                stopExecution = true;
                 break;
+            }
         }
+        if (stopExecution)
+        break;
+    }
 
-    if (stopExecution)
-        goto functioncbend;
-
-    cb(fptr);
-
+    if (stopExecution) goto functioncbend;
+    
+    void *func = ctx->GetFunctionCall(str_key);
+    if (func) {
+        ScriptingFunctionCallback cb = reinterpret_cast<ScriptingFunctionCallback>(func);
+        cb(fptr);
+    }
+    
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
-        {
-            for (void *func : it->second)
+    if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+    {
+        for (void *func : it->second)
             {
                 reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
                 if (fctx.ShouldStopExecution())
@@ -74,11 +72,6 @@ JSValue JSFunctionCallback(JSContext *L, JSValue this_val, int argc, JSValue *ar
     auto ctx = GetContextByState(L);
     std::string str_key = Stack<std::string>::getJS(ctx, func_data[0]);
 
-    void *func = ctx->GetFunctionCall(str_key);
-    if (!func)
-        return JS_ThrowSyntaxError(L, "Unknown function: '%s'.", str_split(str_key, " ").back());
-
-    ScriptingFunctionCallback cb = reinterpret_cast<ScriptingFunctionCallback>(func);
     FunctionContext fctx(str_key, ctx->GetKind(), ctx, argv, argc);
     FunctionContext *fptr = &fctx;
 
@@ -106,7 +99,11 @@ JSValue JSFunctionCallback(JSContext *L, JSValue this_val, int argc, JSValue *ar
     if (stopExecution)
         goto functioncbendjs;
 
-    cb(fptr);
+    void *func = ctx->GetFunctionCall(str_key);
+    if (func) {
+        ScriptingFunctionCallback cb = reinterpret_cast<ScriptingFunctionCallback>(func);
+        cb(fptr);
+    }
 
     // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
     for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)

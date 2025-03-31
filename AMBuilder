@@ -56,6 +56,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/filesystem/files.cpp',
     'src/scripting/filesystem/logger.cpp',
 
+    'src/scripting/sdk/types.cpp',
+
     'src/scripting/core.cpp',
     'src/scripting/stack.cpp',
     
