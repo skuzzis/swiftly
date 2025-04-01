@@ -91,7 +91,7 @@ void AddScriptingVariable(EContext *ctx, std::string namespace_path, std::string
             }
         }
 
-        JS_SetPropertyStr(L, ns, variable_name.c_str(), value.pushJS());
+        JS_SetPropertyStr(L, ns, variable_name.c_str(), value.createValue());
         JS_FreeValue(L, gns);
     }
 }
