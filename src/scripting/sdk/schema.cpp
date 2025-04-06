@@ -82,12 +82,12 @@ void SchemaCallback(PluginObject plugin, EContext* ctx) {
                 data->SetData("class_ptr", classData->GetData<void*>("class_ptr"));
             } else if(classData->HasData("ptr")) {
                 data->SetData("class_ptr", classData->GetData<void*>("ptr"));
-            }
+            } else data->SetData("class_ptr", (void*)nullptr);
         } else {
             auto strptr = context->GetArgumentOr<std::string>(0, "");
             if(starts_with(strptr, "0x")) {
                 data->SetData("class_ptr", (void*)StringToPtr(strptr));
-            }
+            } else data->SetData("class_ptr", (void*)nullptr);
         }
     });
 
