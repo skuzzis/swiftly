@@ -40,9 +40,8 @@ void EntitySystem::StartupServer(const GameSessionConfiguration_t& config, ISour
 void EntitySystem::Spawn(void* entity, void* keyvalues)
 {
     g_GameData.FetchSignature<CBaseEntity_DispatchSpawn>("CBaseEntity_DispatchSpawn")(entity, keyvalues);
-    if(entKeyVal.find(entity) != entKeyVal.end())
-        delete (CEntityKeyValues*)entKeyVal[entity];
-    
+
+    if(entKeyVal.find(entity) != entKeyVal.end()) delete (CEntityKeyValues*)entKeyVal[entity];
     entKeyVal[entity] = keyvalues;
 }
 

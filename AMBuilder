@@ -57,6 +57,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/engine/server.cpp',
 
     'src/scripting/memory/memory.cpp',
+    'src/scripting/memory/keyvalues/centitykeyvalues.cpp',
 
     'src/scripting/filesystem/files.cpp',
     'src/scripting/filesystem/logger.cpp',

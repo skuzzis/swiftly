@@ -374,5 +374,4 @@ LoadScriptingComponent(memory, [](PluginObject plugin, EContext* ctx) -> void {
 
         context->SetReturn(MAKE_CLASS_INSTANCE("QAngle", { { "QAngle_ptr", *((QAngle*)(m_ptr)) } }));
     });
-
 })
