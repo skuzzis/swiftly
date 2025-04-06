@@ -1236,7 +1236,8 @@ struct Stack<ClassData*>
 
     static ClassData* getLua(EContext* ctx, int ref)
     {
-        return *(ClassData**)lua_touserdata(ctx->GetLuaState(), ref);
+        ClassData** data = (ClassData**)lua_touserdata(ctx->GetLuaState(), ref);
+        return data ? *data : nullptr;
     }
 
     static ClassData* getJS(EContext* ctx, JSValue value)

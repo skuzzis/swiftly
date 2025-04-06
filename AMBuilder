@@ -36,6 +36,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/core/console/console.cpp',
 
     'src/engine/gameevents/gameevents.cpp',
+    'src/engine/precacher/game_system.cpp',
+    'src/engine/precacher/precacher.cpp',
 
     'src/entities/system.cpp',
     'src/entities/listener.cpp',
@@ -51,6 +53,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/plugins/object.cpp',
 
     'src/scripting/engine/events.cpp',
+    'src/scripting/engine/precacher.cpp',
     'src/scripting/engine/server.cpp',
 
     'src/scripting/filesystem/files.cpp',
@@ -58,6 +61,8 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/scripting/sdk/baseclasses.cpp',
     'src/scripting/sdk/coretypes.cpp',
+    'src/scripting/sdk/schema_access.cpp',
+    'src/scripting/sdk/schema.cpp',
     'src/scripting/sdk/types.cpp',
 
     'src/scripting/core.cpp',

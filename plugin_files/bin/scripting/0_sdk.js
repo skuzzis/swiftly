@@ -1,12 +1,11 @@
 globalThis.sdk = new Proxy({}, {
     get: (obj, key, receiver) => {
-        // if (key == "CCheckTransmitInfo") return CCheckTransmitInfo;
         if (IsTypeClass(key)) return GenerateTypeFactory(key);
-        // else if (IsSDKClass(key)) return (ptr) => {
-            // let f = GenerateSDKFactory(key)
-            // f.call(ptr)
-            // return f;
-        // };
+        else if (IsSDKClass(key)) return (ptr) => {
+            let f = GenerateSDKFactory(key)
+            f.call(ptr)
+            return f;
+        }
         else return undefined;
     },
     set: (target, key, val, recv) => {

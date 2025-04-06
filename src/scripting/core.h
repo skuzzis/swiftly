@@ -32,4 +32,6 @@ public:
     }
 };
 
+EValue MakeSDKClassInstance(std::string className, void* ptr, EContext* context);
+
 #endif

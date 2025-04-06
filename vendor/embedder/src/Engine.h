@@ -76,18 +76,18 @@ void AddScriptingFunctionPost(EContext* ctx, std::string namespace_path, std::st
     AddScriptingClass(ctx, class_name)
 #define ADD_CLASS_CTX(ctx, class_name) \
     AddScriptingClass(ctx, class_name)
-#define ADD_CLASS_FUNCTION(class_name, function_name, callback) \
-    AddScriptingClassFunction(ctx, class_name, function_name, callback)
-#define ADD_CLASS_FUNCTION_CTX(ctx, class_name, function_name, callback) \
-    AddScriptingClassFunction(ctx, class_name, function_name, callback)
-#define ADD_CLASS_FUNCTION_PRE(class_name, function_name, callback) \
-    AddScriptingClassFunctionPre(ctx, class_name, function_name, callback)
-#define ADD_CLASS_FUNCTION_PRE_CTX(ctx, class_name, function_name, callback) \
-    AddScriptingClassFunctionPre(ctx, class_name, function_name, callback)
-#define ADD_CLASS_FUNCTION_POST(class_name, function_name, callback) \
-    AddScriptingClassFunctionPost(ctx, class_name, function_name, callback)
-#define ADD_CLASS_FUNCTION_POST_CTX(ctx, class_name, function_name, callback) \
-    AddScriptingClassFunctionPost(ctx, class_name, function_name, callback)
+#define ADD_CLASS_FUNCTION(class_name, function_name, ...) \
+    AddScriptingClassFunction(ctx, class_name, function_name, __VA_ARGS__)
+#define ADD_CLASS_FUNCTION_CTX(ctx, class_name, function_name, ...) \
+    AddScriptingClassFunction(ctx, class_name, function_name, __VA_ARGS__)
+#define ADD_CLASS_FUNCTION_PRE(class_name, function_name, ...) \
+    AddScriptingClassFunctionPre(ctx, class_name, function_name, __VA_ARGS__)
+#define ADD_CLASS_FUNCTION_PRE_CTX(ctx, class_name, function_name, ...) \
+    AddScriptingClassFunctionPre(ctx, class_name, function_name, __VA_ARGS__)
+#define ADD_CLASS_FUNCTION_POST(class_name, function_name, ...) \
+    AddScriptingClassFunctionPost(ctx, class_name, function_name, __VA_ARGS__)
+#define ADD_CLASS_FUNCTION_POST_CTX(ctx, class_name, function_name, ...) \
+    AddScriptingClassFunctionPost(ctx, class_name, function_name, __VA_ARGS__)
 
 typedef void (*ScriptingClassFunctionCallback)(FunctionContext*, ClassData*);
 

@@ -1,8 +1,12 @@
 _G = setmetatable(_G, {
     __index = function(t, k)
-        --[[if IsSDKClass(k) then
-            return GenerateSDKFactory(k)
-        else]]if IsTypeClass(k) then
+        if IsSDKClass(k) then
+            return function(ptr)
+                local ent = GenerateSDKFactory(k)
+                ent(ptr)
+                return ent
+            end
+        elseif IsTypeClass(k) then
             return GenerateTypeFactory(k)
         end
     end
@@ -10,9 +14,13 @@ _G = setmetatable(_G, {
 
 sdk = setmetatable({}, {
     __index = function(t, k)
-        --[[if IsSDKClass(k) then
-            return GenerateSDKFactory(k)
-        else]]if IsTypeClass(k) then
+        if IsSDKClass(k) then
+            return function(ptr)
+                local ent = GenerateSDKFactory(k)
+                ent(ptr)
+                return ent
+            end
+        elseif IsTypeClass(k) then
             return GenerateTypeFactory(k)
         end
     end

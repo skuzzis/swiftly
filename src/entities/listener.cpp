@@ -5,6 +5,7 @@
 #include <sdk/schema.h>
 
 CEntityListener g_entityListener;
+std::map<void*, void*> entKeyVal;
 
 void CEntityListener::OnEntitySpawned(CEntityInstance* pEntity)
 {
@@ -29,4 +30,8 @@ void CEntityListener::OnEntityCreated(CEntityInstance* pEntity)
 
 void CEntityListener::OnEntityDeleted(CEntityInstance* pEntity)
 {
+    if(entKeyVal.find(pEntity) != entKeyVal.end()) {
+        delete (CEntityKeyValues*)entKeyVal[pEntity];
+        entKeyVal.erase(pEntity);
+    }
 }

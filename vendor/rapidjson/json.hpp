@@ -16704,6 +16704,8 @@ private:
 RAPIDJSON_NAMESPACE_END
 RAPIDJSON_DIAG_POP
 
+const char* GetParseError_En(rapidjson::ParseErrorCode parseErrorCode);
+
 #endif // RAPIDJSON_SCHEMA_H_
 
 // End file:schema.h

@@ -10,6 +10,9 @@
 #include <core/console/console.h>
 
 #include <engine/gameevents/gameevents.h>
+#include <engine/precacher/precacher.h>
+
+#include <entities/system.h>
 
 #include <server/configuration/configuration.h>
 #include <server/translations/translations.h>
@@ -66,6 +69,8 @@ GameData g_GameData;
 SDKAccess g_sdk;
 PluginsManager g_pluginManager;
 EventManager g_eventManager;
+Precacher g_precacher;
+EntitySystem g_entSystem;
 
 std::map<std::string, std::string> gameEventsRegister;
 
@@ -90,6 +95,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     GET_V_IFACE_CURRENT(GetEngineFactory, g_pSchemaSystem2, CSchemaSystem, SCHEMASYSTEM_INTERFACE_VERSION);
     GET_V_IFACE_CURRENT(GetEngineFactory, g_pGameResourceService, IGameResourceService, GAMERESOURCESERVICESERVER_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetServerFactory, server, ISource2Server, INTERFACEVERSION_SERVERGAMEDLL);
+    GET_V_IFACE_ANY(GetEngineFactory, g_pNetworkServerService, INetworkServerService, NETWORKSERVERSERVICE_INTERFACE_VERSION);
 
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
@@ -111,6 +117,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     g_GameData.PerformPatches();
 
     g_eventManager.Initialize();
+    g_entSystem.Initialize();
 
     g_translations.LoadTranslations();
 
@@ -134,6 +141,7 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
     g_pluginManager.UnloadPlugins();
 
     g_eventManager.Shutdown();
+    g_entSystem.Shutdown();
 
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);

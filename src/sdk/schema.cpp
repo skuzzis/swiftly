@@ -142,3 +142,21 @@ void SetStateChanged(uintptr_t entityPtr, std::string className, std::string fie
             reinterpret_cast<CEntityInstance*>(entityPtr)->NetworkStateChanged(m_key + extraOffset);
     }
 }
+
+void* schema::GetSchemaPtr(void* ptr, const char* className, const char* fieldName)
+{
+    auto m_key = sch::GetOffset(className, fieldName);
+
+    return reinterpret_cast<void*>((uintptr_t)(ptr)+m_key);
+}
+
+void schema::WriteSchemaPtrValue(void* ptr, const char* className, const char* fieldName, byte* value, int size)
+{
+    const auto m_key = sch::GetOffset(className, fieldName);
+
+    void* fieldPtr = reinterpret_cast<std::add_pointer_t<void>>((uintptr_t)(ptr)+m_key);
+
+    Plat_WriteMemory(fieldPtr, value, size);
+
+    SetStateChanged((uintptr_t)ptr, className, fieldName, 0);
+}

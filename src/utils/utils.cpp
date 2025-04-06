@@ -277,3 +277,17 @@ std::vector<std::string> TokenizeCommand(std::string cmd)
 
     return cmdString;
 }
+
+void* StringToPtr(std::string str)
+{
+#ifdef _WIN32
+    return (void*)strtoll(str.c_str(), nullptr, 16);
+#else
+    return (void*)strtol(str.c_str(), nullptr, 16);
+#endif
+}
+
+std::string PtrToString(void* ptr)
+{
+    return string_format("%p", ptr);
+}

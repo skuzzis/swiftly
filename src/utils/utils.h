@@ -51,4 +51,7 @@ std::string string_format(const std::string &format, Args... args)
     return out;
 }
 
+void* StringToPtr(std::string str);
+std::string PtrToString(void* ptr);
+
 #endif

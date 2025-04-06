@@ -1,5 +1,10 @@
 #include "system.h"
+#include <memory/gamedata/gamedata.h>
 
+typedef void (*CBaseEntity_DispatchSpawn)(void*, void*);
+typedef void (*UTIL_Remove)(void*);
+
+extern std::map<void*, void*> entKeyVal;
 void* gameRules = nullptr;
 
 CGameEntitySystem* GameEntitySystem()
@@ -12,7 +17,7 @@ void EntitySystem::Initialize()
     SH_ADD_HOOK_MEMFUNC(INetworkServerService, StartupServer, g_pNetworkServerService, this, &EntitySystem::StartupServer, true);
 }
 
-void EntitySystem::Destroy()
+void EntitySystem::Shutdown()
 {
     SH_REMOVE_HOOK_MEMFUNC(INetworkServerService, StartupServer, g_pNetworkServerService, this, &EntitySystem::StartupServer, true);
 
@@ -30,4 +35,18 @@ void EntitySystem::StartupServer(const GameSessionConfiguration_t& config, ISour
     bDone = true;
 
     g_pGameEntitySystem->AddListenerEntity(&g_entityListener);
+}
+
+void EntitySystem::Spawn(void* entity, void* keyvalues)
+{
+    g_GameData.FetchSignature<CBaseEntity_DispatchSpawn>("CBaseEntity_DispatchSpawn")(entity, keyvalues);
+    if(entKeyVal.find(entity) != entKeyVal.end())
+        delete (CEntityKeyValues*)entKeyVal[entity];
+    
+    entKeyVal[entity] = keyvalues;
+}
+
+void EntitySystem::Despawn(void* entity)
+{
+    g_GameData.FetchSignature<UTIL_Remove>("UTIL_Remove")(entity);
 }

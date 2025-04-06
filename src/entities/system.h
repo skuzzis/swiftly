@@ -21,9 +21,12 @@ class EntitySystem
 {
 public:
     void Initialize();
-    void Destroy();
+    void Shutdown();
 
     void StartupServer(const GameSessionConfiguration_t& config, ISource2WorldSession*, const char*);
+
+    void Spawn(void* entity, void* keyvalues);
+    void Despawn(void* entity);
 };
 
 class CEntityListener : public IEntityListener
@@ -35,6 +38,7 @@ class CEntityListener : public IEntityListener
 };
 
 extern CEntityListener g_entityListener;
+extern EntitySystem g_entSystem;
 
 extern void* gameRules;
 

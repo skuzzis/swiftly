@@ -87,6 +87,8 @@ private:
     std::map<uint64_t, std::string> fieldClass;
     std::map<std::string, std::map<std::string, int64_t>> sdktypes;
     std::set<std::string> classes;
+    std::set<std::string> processedFieldNames;
+    std::set<std::string> blockedFields;
 
 public:
     void LoadSDKData();
@@ -95,9 +97,11 @@ public:
     SDKFieldType_t GetFieldType(uint64_t path);
     std::string GetFieldClass(uint64_t path);
     uint32_t GetFieldSize(uint64_t path);
+    std::set<std::string> GetProcessedFieldNames();
     std::set<std::string> GetClasses();
     std::map<std::string, std::map<std::string, int64_t>> GetSDKTypes();
 
+    bool IsFieldBlocked(std::string field);
     bool ExistsField(uint64_t path);
 };
 

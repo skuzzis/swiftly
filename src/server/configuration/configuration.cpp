@@ -443,9 +443,9 @@ bool Configuration::LoadConfiguration()
     RegisterConfigurationVector<std::string>(wasEdited, coreConfigFile, "core", "core", "patches_to_perform", {}, true, " ");
 
     if(GetGameName() == "cs2") RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "CS2ServerGuidelines", "https://blog.counter-strike.net/index.php/server_guidelines/");
-    RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", string_format("Follow%sServerGuidelines", str_toupper(GetGameName())), true);
+    RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", string_format("Follow%sServerGuidelines", str_toupper(GetGameName()).c_str()), true);
 
-    followServerGuidelines = FetchValue<bool>(string_format("core.Follow%sServerGuidelines", str_toupper(GetGameName())));
+    followServerGuidelines = FetchValue<bool>(string_format("core.Follow%sServerGuidelines", str_toupper(GetGameName()).c_str()));
 
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "console_filtering", true);
 

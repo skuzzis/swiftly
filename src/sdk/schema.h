@@ -7,6 +7,9 @@
 #include <set>
 #include <memory/gamedata/gamedata.h>
 #include <schemasystem/schemasystem.h>
+#include <vector>
+
+extern void* gameRules;
 
 #ifdef GetProp
 #undef GetProp
@@ -40,6 +43,34 @@ namespace schema
     T* GetPropPtr(void* entity, const char* className, const char* fieldName)
     {
         return (T*)((uintptr_t)entity + sch::GetOffset(className, fieldName));
+    }
+
+    void* GetSchemaPtr(void* ptr, const char* className, const char* fieldName);
+    void WriteSchemaPtrValue(void* ptr, const char* className, const char* fieldName, byte* value, int size);
+
+    template<class T>
+    void SetProp(void* ptr, const char* className, const char* fieldName, T value)
+    {
+        auto m_key = sch::GetOffset(className, fieldName);
+
+        *reinterpret_cast<std::add_pointer_t<T>>((uintptr_t)(ptr)+m_key) = value;
+
+        if (gameRules != ptr) SetStateChanged((uintptr_t)ptr, className, fieldName, 0);
+    }
+
+    template <typename T>
+    void SetPropCUtlVector(void* ptr, const char* className, const char* fieldName, std::vector<T> value)
+    {
+        auto m_key = sch::GetOffset(className, fieldName);
+
+        SetStateChanged((uintptr_t)ptr, className, fieldName, 0);
+
+        CUtlVector<T>* vec = reinterpret_cast<CUtlVector<T> *>((uintptr_t)(ptr)+m_key);
+        vec->Purge();
+        for (auto elem : value)
+            vec->AddToTail(elem);
+
+        SetStateChanged((uintptr_t)ptr, className, fieldName, 0);
     }
 };
 

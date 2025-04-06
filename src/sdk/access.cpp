@@ -39,6 +39,7 @@ void SDKAccess::LoadSDKData()
 
                     uint64_t key = ((uint64_t) hash_32_fnv1a_const(className.c_str()) << 32 | hash_32_fnv1a_const(fieldName.c_str()));
 
+                    processedFieldNames.insert(fieldName);
                     fieldNames.insert({ key, it2->value["field"].GetString() });
                     fieldTypes.insert({ key, (SDKFieldType_t)(it2->value["type"].GetUint()) });
                     if (it2->value.HasMember("size") && it2->value["size"].IsUint()) fieldSizes.insert({ key, it2->value["size"].GetUint() });
@@ -68,7 +69,19 @@ void SDKAccess::LoadSDKData()
         }
     }
 
-    PRINTF("Succesfully loaded %lld SDK types.\n", this->sdktypes.size());
+    PRINTF("Succesfully loaded %lld SDK types.\n", sdktypes.size());
+
+    j = encoders::json::FromString(Files::Read(gamedata_path + "blocked_fields_by_guidelines.json"), gamedata_path + "blocked_fields_by_guidelines.json");
+    if(!j.IsArray()) return;
+
+    for (auto it = j.Begin(); it != j.End(); ++it)
+    {
+        if(!it->IsString()) continue;
+        std::string fieldName = it->GetString();
+        blockedFields.insert(fieldName);
+    }
+
+    PRINTF("Succesfully loaded %lld blocked SDK types.\n", blockedFields.size());
 }
 
 std::set<std::string> SDKAccess::GetClasses()
@@ -104,4 +117,14 @@ uint32_t SDKAccess::GetFieldSize(uint64_t path)
 bool SDKAccess::ExistsField(uint64_t path)
 {
     return (fieldNames.find(path) != fieldNames.end());
+}
+
+std::set<std::string> SDKAccess::GetProcessedFieldNames()
+{
+    return processedFieldNames;
+}
+
+bool SDKAccess::IsFieldBlocked(std::string field)
+{
+    return blockedFields.find(field) != blockedFields.end();
 }
