@@ -27,6 +27,7 @@ public:
 
     void Spawn(void* entity, void* keyvalues);
     void Despawn(void* entity);
+    void* CreateByName(const char* name);
 };
 
 class CEntityListener : public IEntityListener

@@ -52,6 +52,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/plugins/manager.cpp',
     'src/plugins/object.cpp',
 
+    'src/scripting/engine/entities.cpp',
     'src/scripting/engine/events.cpp',
     'src/scripting/engine/precacher.cpp',
     'src/scripting/engine/server.cpp',

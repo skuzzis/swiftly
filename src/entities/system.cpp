@@ -3,6 +3,7 @@
 
 typedef void (*CBaseEntity_DispatchSpawn)(void*, void*);
 typedef void (*UTIL_Remove)(void*);
+typedef void* (*UTIL_CreateEntityByName)(const char*, int);
 
 extern std::map<void*, void*> entKeyVal;
 void* gameRules = nullptr;
@@ -48,4 +49,9 @@ void EntitySystem::Spawn(void* entity, void* keyvalues)
 void EntitySystem::Despawn(void* entity)
 {
     g_GameData.FetchSignature<UTIL_Remove>("UTIL_Remove")(entity);
+}
+
+void* EntitySystem::CreateByName(const char* name)
+{
+    return g_GameData.FetchSignature<UTIL_CreateEntityByName>("UTIL_CreateEntityByName")(name, -1);
 }
