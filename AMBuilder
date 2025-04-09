@@ -57,6 +57,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/engine/precacher.cpp',
     'src/scripting/engine/server.cpp',
 
+    'src/scripting/entities/weapons.cpp',
+
     'src/scripting/memory/memory.cpp',
     'src/scripting/memory/keyvalues/centitykeyvalues.cpp',
 

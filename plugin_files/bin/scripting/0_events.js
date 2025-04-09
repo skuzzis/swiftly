@@ -2,20 +2,20 @@ const eventHandlers = {}
 
 const LoadEventFile = (global) => {
     AddGlobalEvents((event, eventName, eventData) => {
-        if (!eventHandlers.hasOwnProperty(eventName)) return 0
-        if (eventHandlers[eventName].length <= 0) return 0
+        if (!eventHandlers.hasOwnProperty(eventName)) return EventResult.Continue
+        if (eventHandlers[eventName].length <= 0) return EventResult.Continue
 
         eventData.unshift(event);
 
         const handlers = eventHandlers[eventName]
         for (let i = 0; i < handlers.length; i++) {
             if ((typeof handlers[i].handle) == "function") {
-                const result = (handlers[i].handle.apply(null, eventData) || 0);
-                if (result != 0) return result
+                const result = (handlers[i].handle.apply(null, eventData) || EventResult.Continue);
+                if (result != EventResult.Continue) return result
             }
         }
 
-        return 0
+        return EventResult.Continue
     })
 
     let eventRegistryIndex = 50

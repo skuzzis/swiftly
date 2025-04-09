@@ -2,18 +2,18 @@ local eventHandlers = {}
 local table_unpack = table.unpack
 
 AddGlobalEvents(function(event, eventName, eventData)
-    if not eventHandlers[eventName] then return 0 end
-    if #eventHandlers[eventName] <= 0 then return 0 end
+    if not eventHandlers[eventName] then return EventResult.Continue end
+    if #eventHandlers[eventName] <= 0 then return EventResult.Continue end
 
     for i = 1, #eventHandlers[eventName] do
         local handle = eventHandlers[eventName][i].handle
         if type(handle) == "function" then
-            local result = (handle(event, table_unpack(eventData)) or 0)
-            if result ~= 0 then return result end
+            local result = (handle(event, table_unpack(eventData)) or EventResult.Continue)
+            if result ~= EventResult.Continue then return result end
         end
     end
 
-    return 0
+    return EventResult.Continue
 end)
 
 local eventRegistryIndex = 50

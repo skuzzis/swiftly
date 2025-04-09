@@ -160,3 +160,9 @@ void schema::WriteSchemaPtrValue(void* ptr, const char* className, const char* f
 
     SetStateChanged((uintptr_t)ptr, className, fieldName, 0);
 }
+
+void* schema::GetVData(void* instance)
+{
+    void* subclassPtr = schema::GetPropPtr<void>(instance, "CBaseEntity", "m_nSubclassID");
+    return *(void**)((uintptr_t)subclassPtr + 4);
+}

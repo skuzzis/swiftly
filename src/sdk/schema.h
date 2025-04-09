@@ -15,6 +15,10 @@ extern void* gameRules;
 #undef GetProp
 #endif
 
+#ifdef SetProp
+#undef SetProp
+#endif
+
 void SetStateChanged(uintptr_t entityPtr, std::string className, std::string fieldName, int extraOffset);
 
 namespace sch
@@ -47,6 +51,7 @@ namespace schema
 
     void* GetSchemaPtr(void* ptr, const char* className, const char* fieldName);
     void WriteSchemaPtrValue(void* ptr, const char* className, const char* fieldName, byte* value, int size);
+    void* GetVData(void* instance);
 
     template<class T>
     void SetProp(void* ptr, const char* className, const char* fieldName, T value)

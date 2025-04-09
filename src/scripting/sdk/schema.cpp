@@ -152,8 +152,7 @@ void SchemaCallback(PluginObject plugin, EContext* ctx) {
 
     ADD_CLASS_FUNCTION("SDKClass", "GetVData", [](FunctionContext* context, ClassData* data) -> void {
         void* instance = data->GetData<void*>("class_ptr");
-        void* subclassPtr = schema::GetPropPtr<void>(instance, "CBaseEntity", "m_nSubclassID");
-        context->SetReturn(MakeSDKClassInstance("CEntitySubclassVDataBase", *(void**)((uintptr_t)subclassPtr + 4), context->GetPluginContext()));
+        context->SetReturn(MakeSDKClassInstance("CEntitySubclassVDataBase", schema::GetVData(instance), context->GetPluginContext()));
     });
 
     ADD_CLASS_FUNCTION("SDKClass", "Teleport", [](FunctionContext* context, ClassData* data) -> void {
