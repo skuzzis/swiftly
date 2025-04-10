@@ -1,5 +1,6 @@
 #include <scripting/core.h>
 #include <memory/gamedata/gamedata.h>
+#include <sdk/game.h>
 
 extern std::map<std::string, std::string> gameEventsRegister;
 
@@ -161,7 +162,7 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
         if(!data->HasData("event_data")) return;
 
         int slot = context->GetArgumentOr<int>(0, -1);
-        if(slot < 0 || slot > 63) return;
+        if(slot < 0 || slot >= GetMaxGameClients()) return;
 
         IGameEventListener2* playerListener = g_GameData.FetchSignature<GetLegacyGameEventListener>("LegacyGameEventListener")(slot);
         playerListener->FireGameEvent(data->GetData<IGameEvent*>("event_data"));

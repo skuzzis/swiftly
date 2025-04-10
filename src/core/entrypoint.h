@@ -4,6 +4,8 @@
 #include <ISmmPlugin.h>
 #include <public/igameevents.h>
 #include <sh_vector.h>
+#include <engine/igameeventsystem.h>
+#include <public/networksystem/inetworkmessages.h>
 #include <public/entity2/entitysystem.h>
 #include <public/iserver.h>
 #include <public/steam/steam_api_common.h>
@@ -41,6 +43,7 @@ extern CGameEntitySystem* g_pGameEntitySystem;
 extern IGameResourceService* g_pGameResourceService;
 extern CEntitySystem* g_pEntitySystem;
 extern IGameEventManager2* g_gameEventManager;
+extern IGameEventSystem* g_pGameEventSystem;
 extern CSteamGameServerAPIContext g_SteamAPI;
 PLUGIN_GLOBALVARS();
 

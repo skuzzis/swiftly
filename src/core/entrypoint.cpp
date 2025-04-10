@@ -16,6 +16,7 @@
 
 #include <server/configuration/configuration.h>
 #include <server/translations/translations.h>
+#include <server/player/manager.h>
 
 #include <filesystem/logs/logger.h>
 
@@ -42,6 +43,7 @@ class GameSessionConfiguration_t
 SH_DECL_HOOK3_void(INetworkServerService, StartupServer, SH_NOATTRIB, 0, const GameSessionConfiguration_t&, ISource2WorldSession*, const char*);
 SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIActivated, SH_NOATTRIB, 0);
 SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIDeactivated, SH_NOATTRIB, 0);
+SH_DECL_HOOK3_void(IServerGameDLL, GameFrame, SH_NOATTRIB, 0, bool, bool, bool);
 
 //////////////////////////////////////////////////////////////
 /////////////////  Core Variables & Functions  //////////////
@@ -55,6 +57,7 @@ CGameEntitySystem* g_pGameEntitySystem = nullptr;
 IGameResourceService* g_pGameResourceService = nullptr;
 CEntitySystem* g_pEntitySystem = nullptr;
 IGameEventManager2* g_gameEventManager = nullptr;
+IGameEventSystem* g_pGameEventSystem = nullptr;
 
 CSteamGameServerAPIContext g_SteamAPI;
 
@@ -71,6 +74,7 @@ PluginsManager g_pluginManager;
 EventManager g_eventManager;
 Precacher g_precacher;
 EntitySystem g_entSystem;
+PlayerManager g_playerManager;
 
 std::map<std::string, std::string> gameEventsRegister;
 
@@ -94,9 +98,11 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer2, INTERFACEVERSION_VENGINESERVER);
     GET_V_IFACE_CURRENT(GetEngineFactory, g_pSchemaSystem2, CSchemaSystem, SCHEMASYSTEM_INTERFACE_VERSION);
     GET_V_IFACE_CURRENT(GetEngineFactory, g_pGameResourceService, IGameResourceService, GAMERESOURCESERVICESERVER_INTERFACE_VERSION);
+    GET_V_IFACE_CURRENT(GetEngineFactory, g_pGameEventSystem, IGameEventSystem, GAMEEVENTSYSTEM_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetServerFactory, server, ISource2Server, INTERFACEVERSION_SERVERGAMEDLL);
     GET_V_IFACE_ANY(GetEngineFactory, g_pNetworkServerService, INetworkServerService, NETWORKSERVERSERVICE_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetFileSystemFactory, g_pFullFileSystem, IFileSystem, FILESYSTEM_INTERFACE_VERSION);
+    GET_V_IFACE_ANY(GetEngineFactory, g_pNetworkMessages, INetworkMessages, NETWORKMESSAGES_INTERFACE_VERSION);
 
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
@@ -119,6 +125,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
 
     g_eventManager.Initialize();
     g_entSystem.Initialize();
+    g_playerManager.Initialize();
 
     g_translations.LoadTranslations();
 
@@ -143,6 +150,7 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
 
     g_eventManager.Shutdown();
     g_entSystem.Shutdown();
+    g_playerManager.Shutdown();
 
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);

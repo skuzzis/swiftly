@@ -10,19 +10,20 @@
 
 #include "ehandle.h"
 #include <sdk/schema.h>
+#include <server/player/manager.h>
 
 typedef void (*GiveNamedItem_t)(void*, const char*, int, int, int, int);
 
 std::set<uint16_t> paintkitsFallbackCheck;
 
 void* GetWeaponServices(int playerid) {
-    CEntityInstance* controller = g_pEntitySystem->GetEntityInstance(CEntityIndex(playerid + 1));
-    if(!controller) return nullptr;
+    auto player = g_playerManager.GetPlayer(playerid);
+    if(!player) return nullptr;
 
-    CHandle<CEntityInstance> pawnHandle = schema::GetProp<CHandle<CEntityInstance>>(controller, "CCSPlayerController", "m_hPlayerPawn");
-    if (!pawnHandle) return nullptr;
+    void* pawn = player->GetPawn();
+    if(!pawn) return nullptr;
 
-    void* weaponServices = schema::GetProp<void*>(pawnHandle.Get(), "CBasePlayerPawn", "m_pWeaponServices");
+    void* weaponServices = schema::GetProp<void*>(pawn, "CBasePlayerPawn", "m_pWeaponServices");
     if(!weaponServices) return nullptr;
 
     return weaponServices;
@@ -77,13 +78,13 @@ LoadScriptingComponent(weapons, [](PluginObject plugin, EContext* ctx) -> void {
         std::string weapon_name = context->GetArgumentOr<std::string>(0, "");
         if(weapon_name == "") return;
 
-        CEntityInstance* controller = g_pEntitySystem->GetEntityInstance(CEntityIndex(playerid + 1));
-        if(!controller) return;
+        auto player = g_playerManager.GetPlayer(playerid);
+        if(!player) return;
 
-        CHandle<CEntityInstance> pawnHandle = schema::GetProp<CHandle<CEntityInstance>>(controller, "CCSPlayerController", "m_hPlayerPawn");
-        if (!pawnHandle) return;
+        void* pawn = player->GetPawn();
+        if(!pawn) return;
 
-        void* itemServices = schema::GetProp<void*>(pawnHandle.Get(), "CBasePlayerPawn", "m_pItemServices");
+        void* itemServices = schema::GetProp<void*>(pawn, "CBasePlayerPawn", "m_pItemServices");
         if(!itemServices) return;
 
         g_GameData.FetchSignature<GiveNamedItem_t>("GiveNamedItem")(itemServices, weapon_name.c_str(), 0, 0, 0, 0);
@@ -324,11 +325,11 @@ LoadScriptingComponent(weapons, [](PluginObject plugin, EContext* ctx) -> void {
         int playerid = data->GetDataOr<int>("playerid", -1);
         if(playerid == -1) return;
 
-        CEntityInstance* controller = g_pEntitySystem->GetEntityInstance(CEntityIndex(playerid + 1));
-        if(!controller) return;
+        auto player = g_playerManager.GetPlayer(playerid);
+        if(!player) return;
 
-        CHandle<CEntityInstance> pawnHandle = schema::GetProp<CHandle<CEntityInstance>>(controller, "CCSPlayerController", "m_hPlayerPawn");
-        if (!pawnHandle) return;
+        void* pawn = player->GetPlayerPawn();
+        if(!pawn) return;
 
         void* attrContainer = schema::GetPropPtr<void>(weapon, "CEconEntity", "m_AttributeManager");
         if(!attrContainer) return;
@@ -362,7 +363,7 @@ LoadScriptingComponent(weapons, [](PluginObject plugin, EContext* ctx) -> void {
             }
         }
 
-        void* vmServices = schema::GetProp<void*>(pawnHandle.Get(), "CCSPlayerPawnBase", "m_pViewModelServices");
+        void* vmServices = schema::GetProp<void*>(pawn, "CCSPlayerPawnBase", "m_pViewModelServices");
         if(!vmServices) return;
 
         CHandle<CEntityInstance>* viewmodelHandles = schema::GetPropPtr<CHandle<CEntityInstance>>(vmServices, "CCSPlayer_ViewModelServices", "m_hViewModel");
