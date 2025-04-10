@@ -5,6 +5,7 @@
 #include <utils/utils.h>
 #include <filesystem/files/files.h>
 #include <scripting/core.h>
+#include <server/commands/manager.h>
 
 PluginObject::PluginObject(std::string m_name, ContextKinds m_kind)
 {
@@ -220,6 +221,10 @@ bool PluginObject::LoadScriptingEnvironment()
 
 void PluginObject::DestroyScriptingEnvironment()
 {
+    std::vector<std::string> commandNames = g_commandsManager.FetchCommandsByPlugin(GetName());
+    for (std::string command : commandNames)
+        g_commandsManager.UnregisterCommand(command);
+
     eventHandlers.clear();
     delete ctx;
 }

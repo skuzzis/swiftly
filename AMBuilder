@@ -35,9 +35,15 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/core/configuration/setup.cpp',
     'src/core/console/console.cpp',
 
+    'src/engine/convars/query.cpp',
+
     'src/engine/gameevents/gameevents.cpp',
+
     'src/engine/precacher/game_system.cpp',
     'src/engine/precacher/precacher.cpp',
+
+    'src/engine/vgui/screentext.cpp',
+    'src/engine/vgui/vgui.cpp',
 
     'src/entities/system.cpp',
     'src/entities/listener.cpp',
@@ -56,6 +62,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/engine/events.cpp',
     'src/scripting/engine/precacher.cpp',
     'src/scripting/engine/server.cpp',
+    'src/scripting/engine/vgui.cpp',
 
     'src/scripting/entities/weapons.cpp',
 
@@ -63,6 +70,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/memory/keyvalues/centitykeyvalues.cpp',
 
     'src/scripting/player/manager.cpp',
+    'src/scripting/player/player.cpp',
 
     'src/scripting/filesystem/files.cpp',
     'src/scripting/filesystem/logger.cpp',
@@ -75,6 +83,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/sdk/schema.cpp',
     'src/scripting/sdk/types.cpp',
 
+    'src/scripting/server/commands.cpp',
+    'src/scripting/server/configuration.cpp',
     'src/scripting/server/translations.cpp',
 
     'src/scripting/core.cpp',
@@ -84,10 +94,13 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/sdk/schema.cpp',
     'src/sdk/game.cpp',
 
-    'src/server/player/manager.cpp',
-    'src/server/player/player.cpp',
+    'src/server/commands/command.cpp',
+    'src/server/commands/manager.cpp',
 
     'src/server/configuration/configuration.cpp',
+
+    'src/server/player/manager.cpp',
+    'src/server/player/player.cpp',
 
     'src/server/translations/translation.cpp',
     'src/server/translations/translations.cpp',

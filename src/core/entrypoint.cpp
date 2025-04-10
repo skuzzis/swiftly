@@ -9,6 +9,8 @@
 #include <core/configuration/setup.h>
 #include <core/console/console.h>
 
+#include <engine/convars/query.h>
+#include <engine/vgui/vgui.h>
 #include <engine/gameevents/gameevents.h>
 #include <engine/precacher/precacher.h>
 
@@ -17,6 +19,7 @@
 #include <server/configuration/configuration.h>
 #include <server/translations/translations.h>
 #include <server/player/manager.h>
+#include <server/commands/manager.h>
 
 #include <filesystem/logs/logger.h>
 
@@ -44,6 +47,11 @@ SH_DECL_HOOK3_void(INetworkServerService, StartupServer, SH_NOATTRIB, 0, const G
 SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIActivated, SH_NOATTRIB, 0);
 SH_DECL_HOOK0_void(IServerGameDLL, GameServerSteamAPIDeactivated, SH_NOATTRIB, 0);
 SH_DECL_HOOK3_void(IServerGameDLL, GameFrame, SH_NOATTRIB, 0, bool, bool, bool);
+SH_DECL_HOOK3_void(ICvar, DispatchConCommand, SH_NOATTRIB, 0, ConCommandRef, const CCommandContext&, const CCommand&);
+SH_DECL_HOOK6(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, CPlayerSlot, const char*, uint64_t, const char*, bool, CBufferString*);
+SH_DECL_HOOK7_void(ISource2GameEntities, CheckTransmit, SH_NOATTRIB, 0, CCheckTransmitInfo**, int, CBitVec<16384>&, const Entity2Networkable_t**, const uint16_t*, int, bool);
+SH_DECL_HOOK6_void(IServerGameClients, OnClientConnected, SH_NOATTRIB, 0, CPlayerSlot, const char*, uint64_t, const char*, const char*, bool);
+SH_DECL_HOOK5_void(IServerGameClients, ClientDisconnect, SH_NOATTRIB, 0, CPlayerSlot, ENetworkDisconnectionReason, const char*, uint64_t, const char*);
 
 //////////////////////////////////////////////////////////////
 /////////////////  Core Variables & Functions  //////////////
@@ -58,6 +66,8 @@ IGameResourceService* g_pGameResourceService = nullptr;
 CEntitySystem* g_pEntitySystem = nullptr;
 IGameEventManager2* g_gameEventManager = nullptr;
 IGameEventSystem* g_pGameEventSystem = nullptr;
+IServerGameClients* gameclients = nullptr;
+ICvar* g_pcVar = nullptr;
 
 CSteamGameServerAPIContext g_SteamAPI;
 
@@ -75,6 +85,9 @@ EventManager g_eventManager;
 Precacher g_precacher;
 EntitySystem g_entSystem;
 PlayerManager g_playerManager;
+CommandsManager g_commandsManager;
+VGUI g_VGUI;
+CvarQuery g_convarQuery;
 
 std::map<std::string, std::string> gameEventsRegister;
 
@@ -95,14 +108,17 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
 
     SetupConsoleColors();
 
+    GET_V_IFACE_CURRENT(GetEngineFactory, g_pCVar, ICvar, CVAR_INTERFACE_VERSION);
     GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer2, INTERFACEVERSION_VENGINESERVER);
     GET_V_IFACE_CURRENT(GetEngineFactory, g_pSchemaSystem2, CSchemaSystem, SCHEMASYSTEM_INTERFACE_VERSION);
-    GET_V_IFACE_CURRENT(GetEngineFactory, g_pGameResourceService, IGameResourceService, GAMERESOURCESERVICESERVER_INTERFACE_VERSION);
     GET_V_IFACE_CURRENT(GetEngineFactory, g_pGameEventSystem, IGameEventSystem, GAMEEVENTSYSTEM_INTERFACE_VERSION);
+    GET_V_IFACE_CURRENT(GetEngineFactory, g_pGameResourceService, IGameResourceService, GAMERESOURCESERVICESERVER_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetServerFactory, server, ISource2Server, INTERFACEVERSION_SERVERGAMEDLL);
-    GET_V_IFACE_ANY(GetEngineFactory, g_pNetworkServerService, INetworkServerService, NETWORKSERVERSERVICE_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetFileSystemFactory, g_pFullFileSystem, IFileSystem, FILESYSTEM_INTERFACE_VERSION);
+    GET_V_IFACE_ANY(GetServerFactory, gameclients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
     GET_V_IFACE_ANY(GetEngineFactory, g_pNetworkMessages, INetworkMessages, NETWORKMESSAGES_INTERFACE_VERSION);
+    GET_V_IFACE_ANY(GetServerFactory, g_pSource2GameEntities, ISource2GameEntities, SOURCE2GAMEENTITIES_INTERFACE_VERSION);
+    GET_V_IFACE_ANY(GetEngineFactory, g_pNetworkServerService, INetworkServerService, NETWORKSERVERSERVICE_INTERFACE_VERSION);
 
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
@@ -123,9 +139,12 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     g_GameData.LoadGameData();
     g_GameData.PerformPatches();
 
+    g_convarQuery.Initialize();
     g_eventManager.Initialize();
     g_entSystem.Initialize();
     g_playerManager.Initialize();
+    g_commandsManager.Initialize();
+    g_VGUI.Initialize();
 
     g_translations.LoadTranslations();
 
@@ -148,9 +167,12 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
     g_pluginManager.StopPlugins(false);
     g_pluginManager.UnloadPlugins();
 
+    g_convarQuery.Shutdown();
     g_eventManager.Shutdown();
     g_entSystem.Shutdown();
     g_playerManager.Shutdown();
+    g_commandsManager.Shutdown();
+    g_VGUI.Shutdown();
 
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);

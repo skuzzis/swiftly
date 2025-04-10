@@ -28,6 +28,7 @@ public:
     void Spawn(void* entity, void* keyvalues);
     void Despawn(void* entity);
     void* CreateByName(const char* name);
+    void AcceptInput(void* entity, std::string input, void* activator, void* caller, std::string value, int outputID);
 };
 
 class CEntityListener : public IEntityListener

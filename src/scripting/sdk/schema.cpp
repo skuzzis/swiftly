@@ -22,7 +22,6 @@ typedef void (*CBaseModelEntity_SetModel_t)(void*, const char*);
 typedef void (*CBaseEntity_TakeDamage)(void*, CTakeDamageInfo*);
 typedef SndOpEventGuid_t(*CBaseEntity_EmitSoundFilter)(IRecipientFilter& filter, CEntityIndex ent, const EmitSound_t& params);
 typedef void (*CBaseEntity_EmitSoundParams)(void*, const char*, int, float, float);
-typedef void (*CEntityInstance_AcceptInput)(void*, const char*, void*, void*, variant_t*, int);
 
 std::set<uint64_t> classFuncs = {
     ((uint64_t)hash_32_fnv1a_const("CBaseEntity") << 32 | hash_32_fnv1a_const("EHandle")),
@@ -141,8 +140,7 @@ void SchemaCallback(PluginObject plugin, EContext* ctx) {
         if(caller && caller->HasData("class_ptr"))
             callerptr = caller->GetData<void*>("class_ptr");
 
-        variant_t variantValue = variant_t(value.c_str());
-        g_GameData.FetchSignature<CEntityInstance_AcceptInput>("CEntityInstance_AcceptInput")(instance, input.c_str(), activatorptr, callerptr, &variantValue, outputID);
+        g_entSystem.AcceptInput(instance, input, activatorptr, callerptr, value, outputID);
     });
 
     ADD_CLASS_FUNCTION("SDKClass", "GetClassname", [](FunctionContext* context, ClassData* data) -> void {

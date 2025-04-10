@@ -44,6 +44,8 @@ extern IGameResourceService* g_pGameResourceService;
 extern CEntitySystem* g_pEntitySystem;
 extern IGameEventManager2* g_gameEventManager;
 extern IGameEventSystem* g_pGameEventSystem;
+extern ICvar* g_pcVar;
+extern IServerGameClients* gameclients;
 extern CSteamGameServerAPIContext g_SteamAPI;
 PLUGIN_GLOBALVARS();
 

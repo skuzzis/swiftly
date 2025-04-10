@@ -4,6 +4,7 @@
 typedef void (*CBaseEntity_DispatchSpawn)(void*, void*);
 typedef void (*UTIL_Remove)(void*);
 typedef void* (*UTIL_CreateEntityByName)(const char*, int);
+typedef void (*CEntityInstance_AcceptInput)(void*, const char*, void*, void*, variant_t*, int);
 
 extern std::map<void*, void*> entKeyVal;
 void* gameRules = nullptr;
@@ -54,4 +55,10 @@ void EntitySystem::Despawn(void* entity)
 void* EntitySystem::CreateByName(const char* name)
 {
     return g_GameData.FetchSignature<UTIL_CreateEntityByName>("UTIL_CreateEntityByName")(name, -1);
+}
+
+void EntitySystem::AcceptInput(void* entity, std::string input, void* activator, void* caller, std::string value, int outputID)
+{
+    variant_t variantValue = variant_t(value.c_str());
+    g_GameData.FetchSignature<CEntityInstance_AcceptInput>("CEntityInstance_AcceptInput")(entity, input.c_str(), activator, caller, &variantValue, outputID);
 }

@@ -3,6 +3,7 @@
 
 #include "player.h"
 
+#include <core/entrypoint.h>
 #include <public/playerslot.h>
 
 class PlayerManager
@@ -25,6 +26,9 @@ public:
     void Shutdown();
 
     void GameFrame(bool a, bool b, bool c);
+    bool ClientConnect(CPlayerSlot slot, const char* pszName, uint64_t xuid, const char* pszNetworkID, bool unk1, CBufferString* pRejectReason);
+    void OnClientConnected(CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, const char* pszAddress, bool bFakePlayer);
+    void ClientDisconnect(CPlayerSlot slot, ENetworkDisconnectionReason reason, const char* pszName, uint64 xuid, const char* pszNetworkID);
 };
 
 extern PlayerManager g_playerManager;

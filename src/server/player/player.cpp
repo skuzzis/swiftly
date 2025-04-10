@@ -9,6 +9,7 @@
 #include <sdk/game.h>
 #include <utils/utils.h>
 #include <sdk/components/CSingleRecipientFilter.h>
+#include <engine/vgui/vgui.h>
 
 #include "usermessages.pb.h"
 
@@ -245,6 +246,12 @@ void Player::Think()
         } else {
             centerMessageEndTime = 0;
         }
+    }
+
+    auto observerServices = schema::GetProp<void*>(GetPawn(), "CBasePlayerPawn", "m_pObserverServices");
+    if(observerServices) {
+        CHandle<CEntityInstance> observerTarget = schema::GetProp<CHandle<CEntityInstance>>(observerServices, "CPlayer_ObserverServices", "m_hObserverTarget");
+        g_VGUI.CheckRenderForPlayer(slot, this, observerTarget);
     }
 }
 
