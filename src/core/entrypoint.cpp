@@ -9,6 +9,7 @@
 #include <core/configuration/setup.h>
 #include <core/console/console.h>
 
+#include <engine/convars/manager.h>
 #include <engine/convars/query.h>
 #include <engine/vgui/vgui.h>
 #include <engine/gameevents/gameevents.h>
@@ -88,6 +89,7 @@ PlayerManager g_playerManager;
 CommandsManager g_commandsManager;
 VGUI g_VGUI;
 CvarQuery g_convarQuery;
+ConvarManager g_cvarManager;
 
 std::map<std::string, std::string> gameEventsRegister;
 

@@ -35,6 +35,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/core/configuration/setup.cpp',
     'src/core/console/console.cpp',
 
+    'src/engine/convars/manager.cpp',
     'src/engine/convars/query.cpp',
 
     'src/engine/gameevents/gameevents.cpp',
@@ -58,6 +59,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/plugins/manager.cpp',
     'src/plugins/object.cpp',
 
+    'src/scripting/engine/convars.cpp',
     'src/scripting/engine/entities.cpp',
     'src/scripting/engine/events.cpp',
     'src/scripting/engine/precacher.cpp',

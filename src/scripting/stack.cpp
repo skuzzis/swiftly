@@ -84,8 +84,12 @@ EValue SerializeData(std::any data, EContext* state)
             return EValue(state, nullptr);
         else if (value.type() == typeid(EValue))
             return std::any_cast<EValue>(value);
-        else if(value.type() == typeid(ClassData*))
-            return EValue(state, std::any_cast<ClassData*>(value));
+        else if(value.type() == typeid(ClassData*)) {
+            ClassData* data = std::any_cast<ClassData*>(value);
+            EValue val(state, data);
+            if(data->HasData("should_mark_freeable")) MarkDeleteOnGC(data);
+            return val;
+        }
         else if (value.type() == typeid(std::vector<std::string>))
         {
             if (state->GetKind() == ContextKinds::Lua) {

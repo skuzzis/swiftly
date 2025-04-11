@@ -41,11 +41,8 @@ EContext::EContext(ContextKinds kind)
     }
     else if (kind == ContextKinds::JavaScript)
     {
-        if (rt == nullptr)
-        {
-            rt = JS_NewRuntime();
-            JS_SetMaxStackSize(rt, 0);
-        }
+        JSRuntime *rt = JS_NewRuntime();
+        JS_SetMaxStackSize(rt, 0);
         JSContext *ctx = JS_NewContext(rt);
 
         JSValue global_obj = JS_GetGlobalObject(ctx);
@@ -79,7 +76,9 @@ EContext::~EContext()
     else if (m_kind == ContextKinds::JavaScript)
     {
         JSContext *ctx = (JSContext *)m_state;
+        JSRuntime* rt = JS_GetRuntime(ctx);
         JS_FreeContext(ctx);
+        JS_FreeRuntime(rt);
     }
 }
 
