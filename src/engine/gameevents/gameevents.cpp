@@ -6,6 +6,8 @@
 #include <filesystem/files/files.h>
 #include <embedder/src/embedder.h>
 #include <plugins/manager.h>
+#include <engine/vgui/vgui.h>
+#include <server/player/manager.h>
 
 #include <dynlibutils/module.h>
 #include <rapidjson/json.hpp>
@@ -145,13 +147,13 @@ bool EventManager::OnFireEvent(IGameEvent* pEvent, bool bDontBroadcast)
 
         if (prettyEventName == "OnPlayerSpawn")
         {
-            // auto slot = pEvent->GetPlayerSlot("userid");
-            // Player* player = g_playerManager->GetPlayer(slot);
-            // if (player)
-            // {
-            //     player->SetFirstSpawn(false);
-            //     player->EnsureCustomView(1);
-            // }
+            auto slot = pEvent->GetPlayerSlot("userid");
+            Player* player = g_playerManager.GetPlayer(slot);
+            if (player)
+            {
+                player->SetFirstSpawn(false);
+                player->EnsureCustomView(1);
+            }
         }
         if (result != EventResult::Continue)
         {
@@ -185,9 +187,9 @@ bool EventManager::OnPostFireEvent(IGameEvent* pEvent, bool bDontBroadcast)
     std::string prettyEventName = gameEventsRegister[eventName];
 
     if (prettyEventName == "OnRoundStart") {
-        // RegisterTimeout(100, []() -> void {
-        //     g_pVGUI->RegenerateScreenTexts();
-        // });
+        g_Plugin.RegisterTimeout(100, []() -> void {
+            g_VGUI.RegenerateScreenTexts();
+        });
     }
 
     if (!prettyEventName.empty())

@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <server/configuration/configuration.h>
 #include <filesystem/logs/logger.h>
+#include <sstream>
 
 const char* wws = " \t\n\r\f\v";
 
@@ -156,7 +157,7 @@ std::string replace(std::string str, const std::string from, const std::string t
 {
     if (from.empty())
         return str;
-    size_t start_pos = 0;
+    int start_pos = 0;
     while ((start_pos = str.find(from, start_pos)) != std::string::npos)
     {
         str.replace(start_pos, from.length(), to);
@@ -168,7 +169,7 @@ std::string replace(std::string str, const std::string from, const std::string t
 std::vector<std::string> explode(std::string s, std::string delimiter)
 {
     if (s.size() == 0) return {};
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+    int pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
     std::vector<std::string> res;
 
@@ -186,7 +187,7 @@ std::vector<std::string> explode(std::string s, std::string delimiter)
 std::set<std::string> explodeToSet(std::string str, std::string delimiter)
 {
     if (str.size() == 0) return {};
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+    int pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
     std::set<std::string> res;
 
@@ -290,4 +291,13 @@ void* StringToPtr(std::string str)
 std::string PtrToString(void* ptr)
 {
     return string_format("%p", ptr);
+}
+
+void PrintTextTable(std::string category, TextTable table)
+{
+    std::stringstream outputTable;
+    outputTable << table;
+    std::vector<std::string> rows = explode(outputTable.str(), "\n");
+    for (int i = 0; i < rows.size() - 1; i++)
+        PLUGIN_PRINTF(category, "%s\n", rows[i].c_str());
 }

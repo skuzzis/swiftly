@@ -51,14 +51,10 @@ public:
     std::string GetVersion();
     std::string GetPlName();
 
-    // @todo Commands
-
     EventResult TriggerEvent(std::string invokedBy, std::string eventName, std::vector<std::any> eventPayload, ClassData* eventObject);
     void RegisterEventHandler(EValue* functionPtr);
     void RegisterEventHandling(std::string eventName);
     void UnregisterEventHandling(std::string eventName);
-
-    // void ExecuteCommand(void* functionPtr, std::string name, int slot, std::vector<std::string> args, bool silent, std::string prefix);
 
     EContext* GetContext();
 };

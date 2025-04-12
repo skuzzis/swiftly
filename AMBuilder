@@ -106,6 +106,8 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/server/translations/translation.cpp',
     'src/server/translations/translations.cpp',
+
+    'src/tools/crashreporter/crashreporter.cpp',
     
     'src/utils/platform/platform_win.cpp',
     'src/utils/platform/platform_linux.cpp',
@@ -117,6 +119,10 @@ for sdk_target in MMSPlugin.sdk_targets:
     os.path.join(sdk['path'], 'entity2', 'entitysystem.cpp'),
     os.path.join(sdk['path'], 'entity2', 'entityidentity.cpp'),
     os.path.join(sdk['path'], 'entity2', 'entitykeyvalues.cpp'),
+  ]
+
+  binary.compiler.defines += [
+    "GITHUB_SHA=\"" + (os.getenv('GITHUB_SHA') == None and "LOCAL" or os.getenv('GITHUB_SHA')) + "\"",
   ]
 
   if binary.compiler.target.platform == 'linux':
@@ -199,6 +205,7 @@ for sdk_target in MMSPlugin.sdk_targets:
       "odbc32.lib",
       "odbccp32.lib",
       "msvcrt.lib",
+      "dbghelp.lib",
 			os.path.join(sdk['path'], 'lib', 'public', 'win64', 'steam_api64.lib')
     ]
     binary.compiler.defines += [

@@ -32,9 +32,11 @@
 #include <sdk/game.h>
 
 #include <schemasystem/schemasystem.h>
+#include <tools/crashreporter/crashreporter.h>
 
 #include <public/tier0/icommandline.h>
 #include <public/steam/steam_gameserver.h>
+#include <utils/utils.h>
 
 //////////////////////////////////////////////////////////////
 /////////////////       SourceHook Hooks       //////////////
@@ -124,6 +126,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
 
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
+    SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameFrame, server, this, &SwiftlyS2::GameFrame, true);
 
     HandleConfigExamples();
 
@@ -157,6 +160,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     {
         g_eventManager.RegisterGameEvents();
         g_SteamAPI.Init();
+        if(!BeginCrashListener()) PRINTRET("Failed to setup crash listener.\n", false);
     }
 
     PRINT("Succesfully started.\n");
@@ -178,13 +182,21 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
 
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
+    SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameFrame, server, this, &SwiftlyS2::GameFrame, true);
 
+    EndCrashListener();
     return true;
+}
+
+void SwiftlyS2::RegisterTimeout(int64_t delay, std::function<void()> callback)
+{
+    timeoutsArray.push_back({delay, callback});
+    processingTimeouts = true;
 }
 
 void SwiftlyS2::AllPluginsLoaded()
 {
-
+    
 }
 
 void SwiftlyS2::OnLevelInit(char const* pMapName, char const* pMapEntities, char const* pOldLevel, char const* pLandmarkName, bool loadGame, bool background)
@@ -197,6 +209,27 @@ void SwiftlyS2::OnLevelShutdown()
 
 }
 
+std::list<std::list<std::pair<int64_t, std::function<void()>>>::iterator> queueRemoveTimeouts;
+
+void SwiftlyS2::GameFrame(bool simulate, bool first, bool last)
+{
+    if(processingTimeouts) {
+        int64_t t = GetTime();
+        for (auto it = timeoutsArray.begin(); it != timeoutsArray.end(); ++it) {
+            if (it->first <= t) {
+                queueRemoveTimeouts.push_back(it);
+                it->second();
+            }
+        }
+
+        for (auto it = queueRemoveTimeouts.rbegin(); it != queueRemoveTimeouts.rend(); ++it)
+            timeoutsArray.erase(*it);
+
+        queueRemoveTimeouts.clear();
+        processingTimeouts = (timeoutsArray.size() > 0);
+    }
+}
+
 void SwiftlyS2::Hook_GameServerSteamAPIActivated()
 {
     if (!CommandLine()->HasParm("-dedicated") || g_SteamAPI.SteamUGC())
@@ -204,6 +237,7 @@ void SwiftlyS2::Hook_GameServerSteamAPIActivated()
 
     g_SteamAPI.Init();
 
+    ExecuteOnce(BeginCrashListener());
     RETURN_META(MRES_IGNORED);
 }
 

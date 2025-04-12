@@ -7,6 +7,7 @@
 
 #include <memory/encoders/json.h>
 
+#include <server/player/manager.h>
 #include <server/configuration/configuration.h>
 
 #include <rapidjson/json.hpp>
@@ -90,8 +91,22 @@ void Translations::LoadTranslations()
 
 std::string Translations::FetchTranslation(std::string key, int playerid)
 {
-    if(g_Config.FetchValue<bool>("core.use_player_language")) {
-        // @todo After adding player object
+    Player* player = g_playerManager.GetPlayer(playerid);
+    if(player && g_Config.FetchValue<bool>("core.use_player_language")) {
+        std::string language = g_Config.FetchValue<std::string>("core.language");
+
+        try {
+            language = std::any_cast<std::string>(player->GetInternalVar("language"));
+        } catch(std::bad_any_cast& e) {}
+
+        if (m_translations.find(key) == m_translations.end()) return key + "." + language;
+
+        std::string translation = m_translations[key].FetchLanguage(language);
+        if (translation == "NO_TRANSLATION") {
+            translation = m_translations[key].FetchLanguage(g_Config.FetchValue<std::string>("core.language"));
+            if(translation == "NO_TRANSLATION") return key + "." + language;
+            else return translation;
+        } else return translation;
     } else {
         std::string language = g_Config.FetchValue<std::string>("core.language");    
 

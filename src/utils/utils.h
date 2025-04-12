@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <texttable/TextTable.h>
 
 constexpr uint32_t val_32_const = 0x811c9dc5;
 constexpr uint32_t prime_32_const = 0x1000193;
@@ -35,6 +36,7 @@ std::string get_uuid();
 std::string TerminalProcessColor(std::string str);
 std::string GetTerminalStringColor(std::string plugin_name);
 std::vector<std::string> TokenizeCommand(std::string cmd);
+void PrintTextTable(std::string category, TextTable table);
 
 template <typename... Args>
 std::string string_format(const std::string &format, Args... args)

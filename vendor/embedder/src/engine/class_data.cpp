@@ -23,47 +23,29 @@ ClassData::~ClassData()
     ClassData* data = this;
     bool ignoreCustomReturn = false;
 
-    auto functionPreCalls = m_ctx->GetClassFunctionPreCalls();
-    auto functionPostCalls = m_ctx->GetClassFunctionPostCalls();
+    auto functionPreCalls = m_ctx->GetClassFunctionPreCalls(str_key);
+    auto functionPostCalls = m_ctx->GetClassFunctionPostCalls(str_key);
     bool stopExecution = false;
     JSValue ret = JS_UNDEFINED;
 
-    // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-    for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+    for (void *func : functionPreCalls)
+    {
+        reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
+        if (fctx.ShouldStopExecution())
         {
-            for (void* func : it->second)
-            {
-                reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
-                if (fctx.ShouldStopExecution())
-                {
-                    stopExecution = true;
-                    break;
-                }
-            }
-            if (stopExecution)
-                break;
+            stopExecution = true;
+            break;
         }
+    }
 
     if (!stopExecution) {
         cb(fptr, data);
 
-        // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-        for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
-            if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
-            {
-                for (void* func : it->second)
-                {
-                    reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
-                    if (fctx.ShouldStopExecution())
-                    {
-                        stopExecution = true;
-                        break;
-                    }
-                }
-                if (stopExecution)
-                    break;
-            }
+        for (void *func : functionPostCalls)
+        {
+            reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
+            if (fctx.ShouldStopExecution()) break;
+        }
     }
 }
 

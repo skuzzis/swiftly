@@ -7,136 +7,77 @@
 int LuaFunctionCallback(lua_State *L)
 {
     std::string str_key = lua_tostring(L, lua_upvalueindex(1));
-    try {
-        auto ctx = GetContextByState(L);
+    auto ctx = GetContextByState(L);
+
+    FunctionContext fctx(str_key, ctx->GetKind(), ctx);
+    FunctionContext *fptr = &fctx;
     
-        FunctionContext fctx(str_key, ctx->GetKind(), ctx);
-        FunctionContext *fptr = &fctx;
-        
-        auto functionPreCalls = ctx->GetFunctionPreCalls();
-        auto functionPostCalls = ctx->GetFunctionPostCalls();
-        bool stopExecution = false;
-        
-        // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-        for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+    auto functionPreCalls = ctx->GetFunctionPreCalls(str_key);
+    auto functionPostCalls = ctx->GetFunctionPostCalls(str_key);
+    bool stopExecution = false;
+    
+    for (void* func : functionPreCalls) {
+        reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
+        if (fctx.ShouldStopExecution())
         {
-            for (void *func : it->second)
-            {
-                reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
-                if (fctx.ShouldStopExecution())
-                {
-                    stopExecution = true;
-                    break;
-                }
-            }
-            if (stopExecution)
+            stopExecution = true;
             break;
         }
-    
-        if (stopExecution) goto functioncbend;
-        
+    }
+
+    if (!stopExecution) {
         void *func = ctx->GetFunctionCall(str_key);
         if (func) {
             ScriptingFunctionCallback cb = reinterpret_cast<ScriptingFunctionCallback>(func);
             cb(fptr);
         }
         
-        // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-        for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
-        {
-            for (void *func : it->second)
-                {
-                    reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
-                    if (fctx.ShouldStopExecution())
-                    {
-                        stopExecution = true;
-                        break;
-                    }
-                }
-                if (stopExecution)
-                    break;
-            }
-    
-    functioncbend:
-        int hasResult = (int)fctx.HasResult();
-    
-        if (hasResult != 0)
-            fctx.pushLuaResult();
-    
-        return hasResult;
-    } catch(std::exception& e) {
-        printf("[Embedder] An error has occured while trying to execute '%s':\n", str_key.c_str());
-        printf("[Embedder] Error: %s\n", e.what());
-        return 0;
+        for (void* func : functionPostCalls) {
+            reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
+            if (fctx.ShouldStopExecution()) break;
+        }
     }
+
+    int hasResult = (int)fctx.HasResult();
+    if (hasResult != 0) fctx.pushLuaResult();
+    return hasResult;
 }
 
 JSValue JSFunctionCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv, int magic, JSValue *func_data)
 {
     auto ctx = GetContextByState(L);
     std::string str_key = Stack<std::string>::getJS(ctx, func_data[0]);
-    try {
-        FunctionContext fctx(str_key, ctx->GetKind(), ctx, argv, argc);
-        FunctionContext *fptr = &fctx;
-    
-        auto functionPreCalls = ctx->GetFunctionPreCalls();
-        auto functionPostCalls = ctx->GetFunctionPostCalls();
-        bool stopExecution = false;
-    
-        // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-        for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
-            if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
-            {
-                for (void *func : it->second)
-                {
-                    reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
-                    if (fctx.ShouldStopExecution())
-                    {
-                        stopExecution = true;
-                        break;
-                    }
-                }
-                if (stopExecution)
-                    break;
-            }
-    
-        if (stopExecution)
-            goto functioncbendjs;
-    
+    FunctionContext fctx(str_key, ctx->GetKind(), ctx, argv, argc);
+    FunctionContext *fptr = &fctx;
+
+    auto functionPreCalls = ctx->GetFunctionPreCalls(str_key);
+    auto functionPostCalls = ctx->GetFunctionPostCalls(str_key);
+    bool stopExecution = false;
+
+    for (void* func : functionPreCalls) {
+        reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
+        if (fctx.ShouldStopExecution())
+        {
+            stopExecution = true;
+            break;
+        }
+    }
+
+    if (!stopExecution) {
         void *func = ctx->GetFunctionCall(str_key);
         if (func) {
             ScriptingFunctionCallback cb = reinterpret_cast<ScriptingFunctionCallback>(func);
             cb(fptr);
         }
     
-        // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-        for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
-            if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
-            {
-                for (void *func : it->second)
-                {
-                    reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
-                    if (fctx.ShouldStopExecution())
-                    {
-                        stopExecution = true;
-                        break;
-                    }
-                }
-                if (stopExecution)
-                    break;
-            }
-    
-    functioncbendjs:
-        if (fctx.HasResult())
-            return fctx.pushJSResult();
-        return JS_UNDEFINED;
-    } catch(std::exception& e) {
-        printf("[Embedder] An error has occured while trying to execute '%s':\n", str_key.c_str());
-        printf("[Embedder] Error: %s\n", e.what());
-        return JS_UNDEFINED;
+        for (void* func : functionPostCalls) {
+            reinterpret_cast<ScriptingFunctionCallback>(func)(fptr);
+            if (fctx.ShouldStopExecution()) break;
+        }
     }
+
+    if (fctx.HasResult()) return fctx.pushJSResult();
+    return JS_UNDEFINED;
 }
 
 void AddScriptingFunction(EContext *ctx, std::string namespace_path, std::string function_name, ScriptingFunctionCallback callback)

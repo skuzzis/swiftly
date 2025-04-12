@@ -60,8 +60,8 @@ int LuaClassFunctionCall(lua_State *L)
     ClassData *data = nullptr;
     bool ignoreCustomReturn = false;
 
-    auto functionPreCalls = ctx->GetClassFunctionPreCalls();
-    auto functionPostCalls = ctx->GetClassFunctionPostCalls();
+    auto functionPreCalls = ctx->GetClassFunctionPreCalls(str_key);
+    auto functionPostCalls = ctx->GetClassFunctionPostCalls(str_key);
     bool stopExecution = false;
 
     if (splits[0] == splits[1])
@@ -79,58 +79,34 @@ int LuaClassFunctionCall(lua_State *L)
         data = Stack<ClassData*>::getLua(ctx, 1);
     }
 
-    // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-    for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+    for (void *func : functionPreCalls)
+    {
+        reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
+        if (fctx.ShouldStopExecution())
         {
-            for (void *func : it->second)
-            {
-                reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
-                if (fctx.ShouldStopExecution())
-                {
-                    stopExecution = true;
-                    break;
-                }
-            }
-            if (stopExecution)
-                break;
+            stopExecution = true;
+            break;
         }
-
-    if (stopExecution)
-        goto classfunctioncbend;
-
-    void *func = ctx->GetClassFunctionCall(str_key);
-    if (func) {
-        ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
-        cb(fptr, data);
     }
 
-    // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-    for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
-        {
-            for (void *func : it->second)
-            {
-                reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
-                if (fctx.ShouldStopExecution())
-                {
-                    stopExecution = true;
-                    break;
-                }
-            }
-            if (stopExecution)
-                break;
+    if (!stopExecution) {
+        void *func = ctx->GetClassFunctionCall(str_key);
+        if (func) {
+            ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
+            cb(fptr, data);
         }
+    
+        for (void *func : functionPostCalls)
+        {
+            reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
+            if (fctx.ShouldStopExecution()) break;
+        }
+    }
 
-classfunctioncbend:
     int hasResult = (int)fctx.HasResult();
 
-    if (ignoreCustomReturn)
-        return 1;
-    else if (hasResult != 0)
-    {
-        fctx.pushLuaResult();
-    }
+    if (ignoreCustomReturn) return 1;
+    else if (hasResult != 0) fctx.pushLuaResult();
     return hasResult;
 }
 
@@ -144,8 +120,8 @@ JSValue JSClassCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv,
     ClassData *data = nullptr;
     bool ignoreCustomReturn = false;
 
-    auto functionPreCalls = ctx->GetClassFunctionPreCalls();
-    auto functionPostCalls = ctx->GetClassFunctionPostCalls();
+    auto functionPreCalls = ctx->GetClassFunctionPreCalls(str_key);
+    auto functionPostCalls = ctx->GetClassFunctionPostCalls(str_key);
     bool stopExecution = false;
     JSValue ret = JS_UNDEFINED;
 
@@ -167,56 +143,33 @@ JSValue JSClassCallback(JSContext *L, JSValue this_val, int argc, JSValue *argv,
         data = (ClassData *)JS_GetOpaque(this_val, *ctx->GetClassID(splits[0]));
     }
 
-    // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-    for (auto it = functionPreCalls.begin(); it != functionPreCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
+    for (void *func : functionPreCalls)
+    {
+        reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
+        if (fctx.ShouldStopExecution())
         {
-            for (void *func : it->second)
-            {
-                reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
-                if (fctx.ShouldStopExecution())
-                {
-                    stopExecution = true;
-                    break;
-                }
-            }
-            if (stopExecution)
-                break;
+            stopExecution = true;
+            break;
         }
-
-    if (stopExecution)
-        goto functionclasscbendjs;
-
-    void *func = ctx->GetClassFunctionCall(str_key);
-    if (func) {
-        ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
-        cb(fptr, data);
     }
 
-    // @todo smarter approach, maybe at first function execution try to see if everything is valid, and if it is, cache it in a map the list and just iterate through it
-    for (auto it = functionPostCalls.begin(); it != functionPostCalls.end(); ++it)
-        if (std::regex_search(str_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs)))
-        {
-            for (void *func : it->second)
-            {
-                reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
-                if (fctx.ShouldStopExecution())
-                {
-                    stopExecution = true;
-                    break;
-                }
-            }
-            if (stopExecution)
-                break;
+    if (!stopExecution) {
+        void *func = ctx->GetClassFunctionCall(str_key);
+        if (func) {
+            ScriptingClassFunctionCallback cb = reinterpret_cast<ScriptingClassFunctionCallback>(func);
+            cb(fptr, data);
         }
+    
+        for (void *func : functionPostCalls)
+        {
+            reinterpret_cast<ScriptingClassFunctionCallback>(func)(fptr, data);
+            if (fctx.ShouldStopExecution()) break;
+        }
+    }
 
-functionclasscbendjs:
-    if (ignoreCustomReturn)
-        return ret;
-    else if (fctx.HasResult())
-        return fctx.pushJSResult();
-    else
-        return JS_UNDEFINED;
+    if (ignoreCustomReturn) return ret;
+    else if (fctx.HasResult()) return fctx.pushJSResult();
+    else return JS_UNDEFINED;
 }
 
 void AddScriptingClass(EContext *ctx, std::string class_name)
