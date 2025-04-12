@@ -22,33 +22,25 @@ static const luaL_Reg lualibs[] = {
 
 JSRuntime *rt = nullptr;
 
-void CheckAndPopulateRegexFunctions(std::map<std::string, std::vector<void *>>& validCalls, std::map<std::string, std::vector<void *>>& calls, std::string function_key, bool forceRegenerate = false) {
-    if(validCalls.find(function_key) == validCalls.end() || forceRegenerate) {
-        std::vector<void*> v;
-        for(auto it = calls.begin(); it != calls.end(); ++it) {
-            try {
-                std::regex re(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs);
-                if (std::regex_search(function_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs))) {
-                    for (void *func : it->second) v.push_back(func);
-                }
-            } catch(std::regex_error& e) {}
-        }
-        validCalls.insert_or_assign(function_key, v);
+void CheckAndPopulateRegexFunctions(std::map<std::string, std::vector<void *>>& validCalls, std::map<std::string, std::vector<void *>>& calls, std::map<std::string, void *>& functions, std::string function_key, bool forceRegenerate = false) {
+    for(auto it = functions.begin(); it != functions.end(); ++it) {
+        validCalls[it->first].clear();
+        try {
+            if (std::regex_search(it->first, std::regex(function_key.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs))) {
+                for (void *func : calls[function_key]) validCalls[it->first].push_back(func);
+            }
+        } catch(std::regex_error& e) {}
     }
 }
 
-void CheckAndPopulateRegexFunctionsPair(std::map<std::string, std::vector<std::pair<void *, void *>>>& validCalls, std::map<std::string, std::vector<std::pair<void *, void *>>>& calls, std::string function_key, bool forceRegenerate = false) {
-    if(validCalls.find(function_key) == validCalls.end() || forceRegenerate) {
-        std::vector<std::pair<void *, void *>> v;
-        for(auto it = calls.begin(); it != calls.end(); ++it) {
-            try {
-                std::regex re(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs);
-                if (std::regex_search(function_key, std::regex(it->first.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs))) {
-                    for (std::pair<void *, void *> func : it->second) v.push_back(func);
-                }
-            } catch(std::regex_error& e) {}
-        }
-        validCalls.insert_or_assign(function_key, v);
+void CheckAndPopulateRegexFunctionsPair(std::map<std::string, std::vector<std::pair<void *, void *>>>& validCalls, std::map<std::string, std::vector<std::pair<void *, void *>>>& calls, std::map<std::string, std::pair<void *, void *>>& functions, std::string function_key, bool forceRegenerate = false) {
+    for(auto it = functions.begin(); it != functions.end(); ++it) {
+        validCalls[it->first].clear();
+        try {
+            if (std::regex_search(it->first, std::regex(function_key.c_str(), std::regex_constants::ECMAScript | std::regex_constants::optimize | std::regex_constants::nosubs))) {
+                for (std::pair<void *, void *> func : calls[function_key]) validCalls[it->first].push_back(func);
+            }
+        } catch(std::regex_error& e) {}
     }
 }
 
@@ -264,12 +256,11 @@ void EContext::AddFunctionPreCall(std::string key, void *val)
         functionPreCalls.insert({key, {}});
 
     functionPreCalls[key].push_back(val);
-    CheckAndPopulateRegexFunctions(functionValidPreCalls, functionPreCalls, key, true);
+    CheckAndPopulateRegexFunctions(functionValidPreCalls, functionPreCalls, functionCalls, key, true);
 }
 
 std::vector<void *> EContext::GetFunctionPreCalls(std::string str_key)
 {
-    CheckAndPopulateRegexFunctions(functionValidPreCalls, functionPreCalls, str_key);
     return functionValidPreCalls[str_key];
 }
 
@@ -279,12 +270,11 @@ void EContext::AddFunctionPostCall(std::string key, void *val)
         functionPostCalls.insert({key, {}});
 
     functionPostCalls[key].push_back(val);
-    CheckAndPopulateRegexFunctions(functionValidPostCalls, functionPostCalls, key, true);
+    CheckAndPopulateRegexFunctions(functionValidPostCalls, functionPostCalls, functionCalls, key, true);
 }
 
 std::vector<void *> EContext::GetFunctionPostCalls(std::string str_key)
 {
-    CheckAndPopulateRegexFunctions(functionValidPostCalls, functionPostCalls, str_key);
     return functionValidPostCalls[str_key];
 }
 
@@ -306,12 +296,11 @@ void EContext::AddClassFunctionPreCalls(std::string key, void *val)
         classFunctionPreCalls.insert({key, {}});
 
     classFunctionPreCalls[key].push_back(val);
-    CheckAndPopulateRegexFunctions(classFunctionValidPreCalls, classFunctionPreCalls, key, true);
+    CheckAndPopulateRegexFunctions(classFunctionValidPreCalls, classFunctionPreCalls, classFunctionCalls, key, true);
 }
 
 std::vector<void *> EContext::GetClassFunctionPreCalls(std::string func_key)
 {
-    CheckAndPopulateRegexFunctions(classFunctionValidPreCalls, classFunctionPreCalls, func_key);
     return classFunctionValidPreCalls[func_key];
 }
 
@@ -321,12 +310,11 @@ void EContext::AddClassFunctionPostCalls(std::string key, void *val)
         classFunctionPostCalls.insert({key, {}});
 
     classFunctionPostCalls[key].push_back(val);
-    CheckAndPopulateRegexFunctions(classFunctionValidPostCalls, classFunctionPostCalls, key, true);
+    CheckAndPopulateRegexFunctions(classFunctionValidPostCalls, classFunctionPostCalls, classFunctionCalls, key, true);
 }
 
 std::vector<void *> EContext::GetClassFunctionPostCalls(std::string func_key)
 {
-    CheckAndPopulateRegexFunctions(classFunctionValidPostCalls, classFunctionPostCalls, func_key);
     return classFunctionValidPostCalls[func_key];
 }
 
@@ -348,12 +336,11 @@ void EContext::AddClassMemberPreCalls(std::string key, std::pair<void *, void *>
         classMemberPreCalls.insert({key, {}});
 
     classMemberPreCalls[key].push_back(val);
-    CheckAndPopulateRegexFunctionsPair(classMemberValidPreCalls, classMemberPreCalls, key, true);
+    CheckAndPopulateRegexFunctionsPair(classMemberValidPreCalls, classMemberPreCalls, classMemberCalls, key, true);
 }
 
 std::vector<std::pair<void *, void *>> EContext::GetClassMemberPreCalls(std::string func_key)
 {
-    CheckAndPopulateRegexFunctionsPair(classMemberValidPreCalls, classMemberPreCalls, func_key);
     return classMemberValidPreCalls[func_key];
 }
 
@@ -363,12 +350,11 @@ void EContext::AddClassMemberPostCalls(std::string key, std::pair<void *, void *
         classMemberPostCalls.insert({key, {}});
 
     classMemberPostCalls[key].push_back(val);
-    CheckAndPopulateRegexFunctionsPair(classMemberValidPostCalls, classMemberPostCalls, key, true);
+    CheckAndPopulateRegexFunctionsPair(classMemberValidPostCalls, classMemberPostCalls, classMemberCalls, key, true);
 }
 
 std::vector<std::pair<void *, void *>> EContext::GetClassMemberPostCalls(std::string func_key)
 {
-    CheckAndPopulateRegexFunctionsPair(classMemberValidPostCalls, classMemberPostCalls, func_key);
     return classMemberValidPostCalls[func_key];
 }
 

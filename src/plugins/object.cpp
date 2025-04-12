@@ -6,6 +6,7 @@
 #include <filesystem/files/files.h>
 #include <scripting/core.h>
 #include <server/commands/manager.h>
+#include <tools/crashreporter/callstack.h>
 
 PluginObject::PluginObject(std::string m_name, ContextKinds m_kind)
 {
@@ -54,6 +55,8 @@ EventResult PluginObject::TriggerEvent(std::string invokedBy, std::string eventN
     if (eventHandlers.find(eventName) == eventHandlers.end())
         return EventResult::Continue;
 
+    uint64_t stackid = g_callStack.RegisterPluginCallstack(GetName(), string_format("Event: %s(invokedBy=\"%s\",payloadSize=%d,event=%p)", eventName.c_str(), invokedBy.c_str(), eventPayload.size(), (void*)eventObject));
+
     EventResult response = EventResult::Continue;
     try
     {
@@ -71,8 +74,10 @@ EventResult PluginObject::TriggerEvent(std::string invokedBy, std::string eventN
     catch (EException& e)
     {
         PRINTF("An error has occured while trying to execute event '%s' in plugin '%s'.\nError: %s", eventName.c_str(), GetName().c_str(), e.what());
-        return EventResult::Continue;
+        response = EventResult::Continue;
     }
+
+    g_callStack.UnregisterPluginCallstack(GetName(), stackid);
 
     return response;
 }

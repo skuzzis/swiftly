@@ -2,6 +2,7 @@
 #define _embedder_engine_functions_h
 
 #include "../Value.h"
+#include <vector>
 
 class FunctionContext
 {
@@ -20,7 +21,10 @@ private:
     JSValue *m_vals;
     int m_argc;
 
+    
 public:
+    std::vector<int64_t> temporaryData;
+    
     FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, bool shouldSkipFirstArgument = false, bool skipCreatedUData = false, bool shouldSkipSecondArgument = false);
     FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue *vals, int argc);
     ~FunctionContext();

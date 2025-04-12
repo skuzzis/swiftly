@@ -3,6 +3,8 @@
 #include <utils/utils.h>
 #include <core/entrypoint.h>
 
+#include <tools/crashreporter/callstack.h>
+
 std::string FetchPluginName(EContext* state);
 std::map<std::string, EContext*> pluginNamesMap = {};
 std::map<EContext*, std::string> pluginNamesMap2 = {};
@@ -31,15 +33,15 @@ void SetupScriptingEnvironment(PluginObject plugin, EContext* ctx)
         pluginNamesMap[plugin.GetName()] = ctx;
     }
 
-    if(ctx->GetKind() == ContextKinds::Lua) ctx->RegisterLuaLib("json", luaopen_rapidjson);
+    if (ctx->GetKind() == ContextKinds::Lua) ctx->RegisterLuaLib("json", luaopen_rapidjson);
 
     ADD_FUNCTION_NS(ctx->GetKind() == ContextKinds::Lua ? "_G" : "console", ctx->GetKind() == ContextKinds::Lua ? "print" : "log", [](FunctionContext* context) -> void {
         std::string prefix = TerminalProcessColor(string_format("[Swiftly] %s[%s]{DEFAULT} ", GetTerminalStringColor(FetchPluginName(context->GetPluginContext())).c_str(), ("plugin:" + FetchPluginName(context->GetPluginContext())).c_str()));
-        
+
         std::vector<std::string> outputArr;
 
-        for(int i = 0; i < context->GetArgumentsCount(); i++) {
-            if(i > 0) outputArr.push_back("\t");
+        for (int i = 0; i < context->GetArgumentsCount(); i++) {
+            if (i > 0) outputArr.push_back("\t");
             outputArr.push_back(TerminalProcessColor(context->GetArgumentAsString(i)));
         }
 
@@ -55,9 +57,25 @@ void SetupScriptingEnvironment(PluginObject plugin, EContext* ctx)
     });
 
     ADD_FUNCTION("GetCurrentPluginName", [](FunctionContext* context) -> void {
+        int* someptr = nullptr;
+        *someptr = 4;
         context->SetReturn(FetchPluginName(context->GetPluginContext()));
     });
 
-    for(auto classLoader : loaderClasses)
+    for (auto classLoader : loaderClasses)
         classLoader->ExecuteLoad(plugin, ctx);
+
+    ADD_FUNCTION("OnFunctionContextRegister", [](FunctionContext* context) -> void {
+        std::string function_call = replace(context->GetFunctionKey(), " ", "::");
+        std::vector<std::string> arguments;
+        for (int i = 0; i < context->GetArgumentsCount(); i++)
+            arguments.push_back(context->GetArgumentAsString(i));
+        function_call += "(" + implode(arguments, ", ") + ")";
+
+        context->temporaryData.push_back(g_callStack.RegisterPluginCallstack(FetchPluginName(context->GetPluginContext()), function_call));
+    });
+
+    ADD_FUNCTION("OnFunctionContextUnregister", [](FunctionContext* context) -> void {
+        g_callStack.UnregisterPluginCallstack(FetchPluginName(context->GetPluginContext()), context->temporaryData[0]);
+    });
 }

@@ -32,6 +32,8 @@
 #include <sdk/game.h>
 
 #include <schemasystem/schemasystem.h>
+
+#include <tools/crashreporter/callstack.h>
 #include <tools/crashreporter/crashreporter.h>
 
 #include <public/tier0/icommandline.h>
@@ -92,6 +94,7 @@ CommandsManager g_commandsManager;
 VGUI g_VGUI;
 CvarQuery g_convarQuery;
 ConvarManager g_cvarManager;
+CallStackManager g_callStack;
 
 std::map<std::string, std::string> gameEventsRegister;
 
@@ -160,7 +163,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     {
         g_eventManager.RegisterGameEvents();
         g_SteamAPI.Init();
-        if(!BeginCrashListener()) PRINTRET("Failed to setup crash listener.\n", false);
+        if (!BeginCrashListener()) PRINTRET("Failed to setup crash listener.\n", false);
     }
 
     PRINT("Succesfully started.\n");
@@ -190,13 +193,13 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
 
 void SwiftlyS2::RegisterTimeout(int64_t delay, std::function<void()> callback)
 {
-    timeoutsArray.push_back({delay, callback});
+    timeoutsArray.push_back({ delay, callback });
     processingTimeouts = true;
 }
 
 void SwiftlyS2::AllPluginsLoaded()
 {
-    
+
 }
 
 void SwiftlyS2::OnLevelInit(char const* pMapName, char const* pMapEntities, char const* pOldLevel, char const* pLandmarkName, bool loadGame, bool background)
@@ -213,7 +216,7 @@ std::list<std::list<std::pair<int64_t, std::function<void()>>>::iterator> queueR
 
 void SwiftlyS2::GameFrame(bool simulate, bool first, bool last)
 {
-    if(processingTimeouts) {
+    if (processingTimeouts) {
         int64_t t = GetTime();
         for (auto it = timeoutsArray.begin(); it != timeoutsArray.end(); ++it) {
             if (it->first <= t) {

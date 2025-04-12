@@ -107,6 +107,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/server/translations/translation.cpp',
     'src/server/translations/translations.cpp',
 
+    'src/tools/crashreporter/callstack.cpp',
     'src/tools/crashreporter/crashreporter.cpp',
     
     'src/utils/platform/platform_win.cpp',

@@ -1,4 +1,5 @@
 #include "crashreporter.h"
+#include "callstack.h"
 
 #include <vector>
 #include <string>
@@ -6,6 +7,7 @@
 #include <filesystem/files/files.h>
 #include <core/entrypoint.h>
 #include <tier0/icommandline.h>
+#include <plugins/manager.h>
 
 #ifndef GITHUB_SHA
 #define GITHUB_SHA "LOCAL"
@@ -103,7 +105,7 @@ LONG WINAPI CustomUnhandledExceptionFilter(EXCEPTION_POINTERS* pExceptionPointer
     for (int frame = 0; frame < 64; ++frame)
     {
         if (!StackWalk64(machineType, hProcess, hThread, &stackFrame, context,
-                        NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL))
+            NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL))
         {
             break;
         }
@@ -130,10 +132,10 @@ LONG WINAPI CustomUnhandledExceptionFilter(EXCEPTION_POINTERS* pExceptionPointer
 
         if (SymGetLineFromAddr64(hProcess, address, &lineDisplacement, &line))
         {
-            constructFunctionStr += (std::string(" -> ") + line.FileName + ":" + std::to_string(line.LineNumber-2));
+            constructFunctionStr += (std::string(" -> ") + line.FileName + ":" + std::to_string(line.LineNumber - 2));
         }
 
-        if(constructFunctionStr != "") functionStack.push_back(constructFunctionStr);
+        if (constructFunctionStr != "") functionStack.push_back(constructFunctionStr);
     }
 
     SymCleanup(hProcess);
@@ -163,7 +165,7 @@ static void error_callback(void*, const char* msg, int) {
 void signal_handler(int signumber)
 {
     std::vector<std::string> functionStack;
-    
+
     auto state = backtrace_create_state(nullptr, 1, error_callback, nullptr);
     backtrace_full(state, 0, full_callback, error_callback, &functionStack);
 
@@ -206,11 +208,27 @@ void EndCrashListener() {
 }
 #endif
 
+std::string WritePluginsCallStack()
+{
+    std::string callstacks = "";
+    for (auto plugin : g_pluginManager.GetPluginsList()) {
+        auto callstack = g_callStack.GetPluginCallstack(plugin->GetName());
+        if (callstack.size() > 0) {
+            callstacks += string_format("Plugin %s:\n", plugin->GetName().c_str());
+            for (auto it = callstack.begin(); it != callstack.end(); ++it)
+                callstacks += string_format("    - %s\n", it->second.c_str());
+
+            callstacks += "\n";
+        }
+    }
+    return callstacks;
+}
+
 bool crashed = false;
 
 void WriteCrashDump(std::vector<std::string> functionStack)
 {
-    if(crashed) return;
+    if (crashed) return;
 
     crashed = true;
     PLUGIN_PRINTF("Crash Reporter", "A crash has occured and a dump has been created:\n");
@@ -224,16 +242,16 @@ void WriteCrashDump(std::vector<std::string> functionStack)
     backtraceTable.add(" Data ");
     backtraceTable.endOfRow();
 
-    for(int i = 0; i < functionStack.size(); i++) {
-        backtraceTable.add(string_format(" %02d. ", i+1));
+    for (int i = 0; i < functionStack.size(); i++) {
+        backtraceTable.add(string_format(" %02d. ", i + 1));
         backtraceTable.add(string_format(" %s ", functionStack[i].c_str()));
         backtraceTable.endOfRow();
 
-        functionStack[i] = string_format("%02d. %s", i+1, functionStack[i].c_str());
+        functionStack[i] = string_format("%02d. %s", i + 1, functionStack[i].c_str());
     }
 
     PrintTextTable("Crash Reporter", backtraceTable);
 
-    Files::Append(file_path, string_format("================================\nCommand: %s\nMap: %s\nVersion: %s (%s)\n================================\n\n%s", startup_cmd.c_str(), engine->GetServerGlobals() ? engine->GetServerGlobals()->mapname.ToCStr() : "None", g_Plugin.GetVersion(), GITHUB_SHA, implode(functionStack, "\n").c_str()), false);
+    Files::Append(file_path, string_format("================================\nCommand: %s\nMap: %s\nVersion: %s (%s)\n================================\n\n%s\n\n%s", startup_cmd.c_str(), engine->GetServerGlobals() ? engine->GetServerGlobals()->mapname.ToCStr() : "None", g_Plugin.GetVersion(), GITHUB_SHA, implode(functionStack, "\n").c_str(), WritePluginsCallStack().c_str()), false);
     PLUGIN_PRINTF("Crash Reporter", "A dump log file has been created at: %s\n", file_path.c_str());
 }

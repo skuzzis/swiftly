@@ -1,5 +1,7 @@
 #include "functions.h"
 
+typedef void (*ScriptingFunctionCallback)(FunctionContext*);
+
 FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, bool shouldSkipFirstArgument, bool skipCreatedUData, bool shouldSkipSecondArgument)
 {
     m_function_key = function_key;
@@ -8,6 +10,10 @@ FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EC
     m_shouldSkipFirstArgument = shouldSkipFirstArgument;
     m_skipCreatedUData = skipCreatedUData;
     m_shouldSkipSecondArgument = shouldSkipSecondArgument;
+
+    void* cb = ctx->GetFunctionCall("_G OnFunctionContextRegister");
+    if(!cb) return;
+    reinterpret_cast<ScriptingFunctionCallback>(cb)(this);
 }
 
 FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EContext *ctx, JSValue *vals, int argc)
@@ -17,12 +23,20 @@ FunctionContext::FunctionContext(std::string function_key, ContextKinds kind, EC
     m_ctx = ctx;
     m_vals = vals;
     m_argc = argc;
+
+    void* cb = ctx->GetFunctionCall("_G OnFunctionContextRegister");
+    if(!cb) return;
+    reinterpret_cast<ScriptingFunctionCallback>(cb)(this);
 }
 
 FunctionContext::~FunctionContext()
 {
     if (returnRef != LUA_NOREF)
         luaL_unref(m_ctx->GetLuaState(), LUA_REGISTRYINDEX, returnRef);
+
+    void* cb = m_ctx->GetFunctionCall("_G OnFunctionContextUnregister");
+    if(!cb) return;
+    reinterpret_cast<ScriptingFunctionCallback>(cb)(this);
 }
 
 bool FunctionContext::HasResult()
