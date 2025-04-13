@@ -109,6 +109,7 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/tools/crashreporter/callstack.cpp',
     'src/tools/crashreporter/crashreporter.cpp',
+    'src/tools/resourcemonitor/monitor.cpp',
     
     'src/utils/platform/platform_win.cpp',
     'src/utils/platform/platform_linux.cpp',

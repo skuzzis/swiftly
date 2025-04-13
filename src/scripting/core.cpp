@@ -4,6 +4,7 @@
 #include <core/entrypoint.h>
 
 #include <tools/crashreporter/callstack.h>
+#include <tools/resourcemonitor/monitor.h>
 
 std::string FetchPluginName(EContext* state);
 std::map<std::string, EContext*> pluginNamesMap = {};
@@ -73,9 +74,11 @@ void SetupScriptingEnvironment(PluginObject plugin, EContext* ctx)
         function_call += "(" + implode(arguments, ", ") + ")";
 
         context->temporaryData.push_back(g_callStack.RegisterPluginCallstack(FetchPluginName(context->GetPluginContext()), function_call));
+        g_ResourceMonitor.StartTime("core", replace(context->GetFunctionKey(), " ", "::"));
     });
 
     ADD_FUNCTION("OnFunctionContextUnregister", [](FunctionContext* context) -> void {
+        g_ResourceMonitor.StopTime("core", replace(context->GetFunctionKey(), " ", "::"));
         g_callStack.UnregisterPluginCallstack(FetchPluginName(context->GetPluginContext()), context->temporaryData[0]);
     });
 }

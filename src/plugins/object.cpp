@@ -7,6 +7,7 @@
 #include <scripting/core.h>
 #include <server/commands/manager.h>
 #include <tools/crashreporter/callstack.h>
+#include <tools/resourcemonitor/monitor.h>
 
 PluginObject::PluginObject(std::string m_name, ContextKinds m_kind)
 {
@@ -56,6 +57,8 @@ EventResult PluginObject::TriggerEvent(std::string invokedBy, std::string eventN
         return EventResult::Continue;
 
     uint64_t stackid = g_callStack.RegisterPluginCallstack(GetName(), string_format("Event: %s(invokedBy=\"%s\",payloadSize=%d,event=%p)", eventName.c_str(), invokedBy.c_str(), eventPayload.size(), (void*)eventObject));
+    std::string eventResmon = "event:" + eventName;
+    g_ResourceMonitor.StartTime(GetName(), eventResmon);
 
     EventResult response = EventResult::Continue;
     try
@@ -77,6 +80,7 @@ EventResult PluginObject::TriggerEvent(std::string invokedBy, std::string eventN
         response = EventResult::Continue;
     }
 
+    g_ResourceMonitor.StopTime(GetName(), eventResmon);
     g_callStack.UnregisterPluginCallstack(GetName(), stackid);
 
     return response;

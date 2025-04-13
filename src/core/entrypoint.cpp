@@ -35,6 +35,7 @@
 
 #include <tools/crashreporter/callstack.h>
 #include <tools/crashreporter/crashreporter.h>
+#include <tools/resourcemonitor/monitor.h>
 
 #include <public/tier0/icommandline.h>
 #include <public/steam/steam_gameserver.h>
@@ -95,6 +96,7 @@ VGUI g_VGUI;
 CvarQuery g_convarQuery;
 ConvarManager g_cvarManager;
 CallStackManager g_callStack;
+ResourceMonitor g_ResourceMonitor;
 
 std::map<std::string, std::string> gameEventsRegister;
 

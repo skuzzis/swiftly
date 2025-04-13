@@ -3,6 +3,7 @@
 #include <utils/common.h>
 #include <plugins/manager.h>
 #include <tools/crashreporter/callstack.h>
+#include <tools/resourcemonitor/monitor.h>
 #include <utils/utils.h>
 
 Command::Command(std::string plugin_name, EValue* functionPtr, std::string name)
@@ -27,6 +28,9 @@ void Command::Execute(int slot, std::vector<std::string> args, bool silent, std:
     if (!m_funcPtr->isFunction()) return;
 
     uint64_t stackid = g_callStack.RegisterPluginCallstack(m_pluginName, string_format("Command::Execute(command_name=\"%s\",slot=%d,args=\"%s\",silent=%d,prefix=\"%s\")", m_commandName.c_str(), slot, implode(args, " ").c_str(), silent, prefix.c_str()));
+    std::string cmdResmon = "command:" + m_commandName;
+    g_ResourceMonitor.StartTime(m_pluginName, cmdResmon);
+
     try {
         EValue command = *m_funcPtr;
         int argc = args.size();
@@ -36,6 +40,7 @@ void Command::Execute(int slot, std::vector<std::string> args, bool silent, std:
         PRINTF("An error has occured while executing command '%s'.\n", m_commandName.c_str());
         PRINTF("%s\n", e.what());
     }
+    g_ResourceMonitor.StopTime(m_pluginName, cmdResmon);
     g_callStack.UnregisterPluginCallstack(m_pluginName, stackid);
 }
 
