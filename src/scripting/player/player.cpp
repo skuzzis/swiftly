@@ -8,10 +8,10 @@
 LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
     ADD_FUNCTION("GetPlayer", [](FunctionContext* context) -> void {
         int playerid = context->GetArgumentOr<int>(0, -1);
-        if(playerid < 0 || playerid >= GetMaxGameClients()) return;
+        if (playerid < 0 || playerid >= GetMaxGameClients()) return;
 
         auto player = g_playerManager.GetPlayer(playerid);
-        if(!player) return;
+        if (!player) return;
 
         context->SetReturn(player->GetPlayerObject());
     });
@@ -22,7 +22,7 @@ LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
         int playerid = data->GetData<int>("playerid");
 
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn(MakeSDKClassInstance("CBaseEntity", nullptr, context->GetPluginContext()));
+        if (!player) return context->SetReturn(MakeSDKClassInstance("CBaseEntity", nullptr, context->GetPluginContext()));
 
         context->SetReturn(MakeSDKClassInstance("CBaseEntity", player->GetPlayerPawn(), context->GetPluginContext()));
     });
@@ -31,7 +31,7 @@ LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
         int playerid = data->GetData<int>("playerid");
 
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn(MakeSDKClassInstance("CBasePlayerController", nullptr, context->GetPluginContext()));
+        if (!player) return context->SetReturn(MakeSDKClassInstance("CBasePlayerController", nullptr, context->GetPluginContext()));
 
         context->SetReturn(MakeSDKClassInstance("CBasePlayerController", player->GetController(), context->GetPluginContext()));
     });
@@ -40,7 +40,7 @@ LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
         int playerid = data->GetData<int>("playerid");
 
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn(MakeSDKClassInstance("CBasePlayerPawn", nullptr, context->GetPluginContext()));
+        if (!player) return context->SetReturn(MakeSDKClassInstance("CBasePlayerPawn", nullptr, context->GetPluginContext()));
 
         context->SetReturn(MakeSDKClassInstance("CBasePlayerPawn", player->GetPawn(), context->GetPluginContext()));
     });
@@ -49,7 +49,7 @@ LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
         int playerid = data->GetData<int>("playerid");
 
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn(MakeSDKClassInstance("CCSPlayerController", nullptr, context->GetPluginContext()));
+        if (!player) return context->SetReturn(MakeSDKClassInstance("CCSPlayerController", nullptr, context->GetPluginContext()));
 
         context->SetReturn(MakeSDKClassInstance("CCSPlayerController", player->GetController(), context->GetPluginContext()));
     });
@@ -58,7 +58,7 @@ LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
         int playerid = data->GetData<int>("playerid");
 
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn(MakeSDKClassInstance("CCSPlayerPawn", nullptr, context->GetPluginContext()));
+        if (!player) return context->SetReturn(MakeSDKClassInstance("CCSPlayerPawn", nullptr, context->GetPluginContext()));
 
         context->SetReturn(MakeSDKClassInstance("CCSPlayerPawn", player->GetPlayerPawn(), context->GetPluginContext()));
     });
@@ -67,7 +67,7 @@ LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
         int playerid = data->GetData<int>("playerid");
 
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn(MakeSDKClassInstance("CCSPlayerPawnBase", nullptr, context->GetPluginContext()));
+        if (!player) return context->SetReturn(MakeSDKClassInstance("CCSPlayerPawnBase", nullptr, context->GetPluginContext()));
 
         context->SetReturn(MakeSDKClassInstance("CCSPlayerPawnBase", player->GetPlayerPawn(), context->GetPluginContext()));
     });
@@ -76,81 +76,81 @@ LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
         int playerid = data->GetData<int>("playerid");
 
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return;
+        if (!player) return;
 
         int reason = context->GetArgumentOr<int>(0, -1);
-        if(reason == -1) return;
+        if (reason == -1) return;
 
         std::string str_reason = context->GetArgumentOr<std::string>(1, "");
 
-        if(!engine) return;
+        if (!engine) return;
 
         engine->DisconnectClient(CPlayerSlot(playerid), (ENetworkDisconnectionReason)reason, str_reason == "" ? nullptr : str_reason.c_str());
     });
 
     ADD_CLASS_FUNCTION("Player", "GetChatTag", [](FunctionContext* context, ClassData* data) -> void {
         int playerid = data->GetData<int>("playerid");
-        
-        Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn("");
 
-        context->SetReturn(player->GetInternalVar("chattag"));
+        Player* player = g_playerManager.GetPlayer(playerid);
+        if (!player) return context->SetReturn("");
+
+        context->SetReturn(player->GetInternalVar("tag"));
     });
 
     ADD_CLASS_FUNCTION("Player", "GetChatTagColor", [](FunctionContext* context, ClassData* data) -> void {
         int playerid = data->GetData<int>("playerid");
-        
-        Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn("");
 
-        context->SetReturn(player->GetInternalVar("chattagcolor"));
+        Player* player = g_playerManager.GetPlayer(playerid);
+        if (!player) return context->SetReturn("");
+
+        context->SetReturn(player->GetInternalVar("tagcolor"));
     });
 
     ADD_CLASS_FUNCTION("Player", "GetNameColor", [](FunctionContext* context, ClassData* data) -> void {
         int playerid = data->GetData<int>("playerid");
-        
+
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn("");
+        if (!player) return context->SetReturn("");
 
         context->SetReturn(player->GetInternalVar("namecolor"));
     });
 
     ADD_CLASS_FUNCTION("Player", "GetChatColor", [](FunctionContext* context, ClassData* data) -> void {
         int playerid = data->GetData<int>("playerid");
-        
+
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return context->SetReturn("");
+        if (!player) return context->SetReturn("");
 
         context->SetReturn(player->GetInternalVar("chatcolor"));
     });
 
     ADD_CLASS_FUNCTION("Player", "SetChatTag", [](FunctionContext* context, ClassData* data) -> void {
         int playerid = data->GetData<int>("playerid");
-        
+
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return;
+        if (!player) return;
 
         std::string value = context->GetArgumentOr<std::string>(0, "");
 
-        player->SetInternalVar("chattag", value);
+        player->SetInternalVar("tag", value);
     });
 
     ADD_CLASS_FUNCTION("Player", "SetChatTagColor", [](FunctionContext* context, ClassData* data) -> void {
         int playerid = data->GetData<int>("playerid");
-        
+
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return;
+        if (!player) return;
 
         std::string value = context->GetArgumentOr<std::string>(0, "");
 
-        player->SetInternalVar("chattagcolor", value);
+        player->SetInternalVar("tagcolor", value);
     });
 
     ADD_CLASS_FUNCTION("Player", "SetNameColor", [](FunctionContext* context, ClassData* data) -> void {
         int playerid = data->GetData<int>("playerid");
-        
+
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return;
+        if (!player) return;
 
         std::string value = context->GetArgumentOr<std::string>(0, "");
 
@@ -159,9 +159,9 @@ LoadScriptingComponent(player, [](PluginObject plugin, EContext* ctx) -> void {
 
     ADD_CLASS_FUNCTION("Player", "SetChatColor", [](FunctionContext* context, ClassData* data) -> void {
         int playerid = data->GetData<int>("playerid");
-        
+
         Player* player = g_playerManager.GetPlayer(playerid);
-        if(!player) return;
+        if (!player) return;
 
         std::string value = context->GetArgumentOr<std::string>(0, "");
 

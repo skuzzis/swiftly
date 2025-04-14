@@ -14,3 +14,6 @@
 [submodule "vendor/lua-rapidjson"]
 	path = vendor/lua-rapidjson
 	url = https://github.com/xpol/lua-rapidjson
+[submodule "vendor/swiftly-ext"]
+	path = vendor/swiftly-ext
+	url = https://github.com/swiftly-solution/swiftly-ext

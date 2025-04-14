@@ -5,10 +5,10 @@
 
 #define NEW_CVAR(data_type, default_value) \
     cvarptr = (void*)(new CConVar<data_type>(cvar_name.c_str(), flags, description.c_str(), AnyCastOr<data_type>(defaultValue, default_value), min, AnyCastOr<data_type>(min_value, default_value), max, AnyCastOr<data_type>(max_value, default_value)))
-    
+
 #define NEW_CVAR_CLASS(data_type, str, default_value) \
     cvarptr = (void*)(new CConVar<data_type>(cvar_name.c_str(), flags, description.c_str(), AnyCastClassData<data_type>(defaultValue, str, default_value), min, AnyCastClassData<data_type>(min_value, str, default_value), max, AnyCastClassData<data_type>(max_value, str, default_value)))
-    
+
 #define FREE_CVAR(data_type) \
     delete (CConVar<data_type>*)cvarptr;
 
@@ -16,13 +16,13 @@ EConVarType ConvarManager::GetConvarType(std::string cvar_name)
 {
     ConVarRefAbstract cvar(cvar_name.c_str());
 
-    if(!cvar.IsValidRef()) return EConVarType_Invalid;
+    if (!cvar.IsValidRef()) return EConVarType_Invalid;
     return cvar.GetType();
 }
 
 ConvarManager::~ConvarManager()
 {
-    for(auto it = cvarsMap.begin(); it != cvarsMap.end(); ++it)
+    for (auto it = cvarsMap.begin(); it != cvarsMap.end(); ++it)
         DeleteConvar(it->first);
 }
 
@@ -74,23 +74,23 @@ std::any ConvarManager::GetConvarValue(std::string cvar_name)
     }
     else if (cvar.GetType() == EConVarType_Color)
     {
-        return new ClassData({ { "Color_ptr", cvar.GetAs<Color>(server) }, { "should_mark_freeable", true } }, "Color", nullptr);
+        return cvar.GetAs<Color>(server);
     }
     else if (cvar.GetType() == EConVarType_Vector2)
     {
-        return new ClassData({ { "Vector2D_ptr", cvar.GetAs<Vector2D>(server) }, { "should_mark_freeable", true } }, "Vector2D", nullptr);
+        return cvar.GetAs<Vector2D>(server);
     }
     else if (cvar.GetType() == EConVarType_Vector3)
     {
-        return new ClassData({ { "vector_ptr", cvar.GetAs<Vector>(server) }, { "should_mark_freeable", true } }, "Vector", nullptr);
+        return cvar.GetAs<Vector>(server);
     }
     else if (cvar.GetType() == EConVarType_Vector4)
     {
-        return new ClassData({ { "Vector4D_ptr", cvar.GetAs<Vector4D>(server) }, { "should_mark_freeable", true } }, "Vector4D", nullptr);
+        return cvar.GetAs<Vector4D>(server);
     }
     else if (cvar.GetType() == EConVarType_Qangle)
     {
-        return new ClassData({ { "QAngle_ptr", cvar.GetAs<QAngle>(server) }, { "should_mark_freeable", true } }, "QAngle", nullptr);
+        return cvar.GetAs<QAngle>(server);
     }
     else {
         PRINTF("Unsupported ConVar type: %d. Returning null.\n", (int)cvar.GetType());
@@ -143,9 +143,9 @@ void ConvarManager::SetConvarValue(std::string cvar_name, std::any value)
         }
         else if (cvar.GetType() == EConVarType_String)
         {
-            if(value.type() == typeid(char*)) cvar.SetString(CUtlString(std::any_cast<char*>(value)), server);
-            else if(value.type() == typeid(const char*)) cvar.SetString(CUtlString(std::any_cast<const char*>(value)), server);
-            else if(value.type() == typeid(std::string)) cvar.SetString(CUtlString(std::any_cast<std::string>(value).c_str()), server);
+            if (value.type() == typeid(char*)) cvar.SetString(CUtlString(std::any_cast<char*>(value)), server);
+            else if (value.type() == typeid(const char*)) cvar.SetString(CUtlString(std::any_cast<const char*>(value)), server);
+            else if (value.type() == typeid(std::string)) cvar.SetString(CUtlString(std::any_cast<std::string>(value).c_str()), server);
         }
         else if (cvar.GetType() == EConVarType_Color)
         {
@@ -167,13 +167,14 @@ void ConvarManager::SetConvarValue(std::string cvar_name, std::any value)
         {
             cvar.SetAs<QAngle>(std::any_cast<ClassData*>(value)->GetData<QAngle>("QAngle_ptr"), server);
         }
-    } catch(std::bad_any_cast& e) {}
+    }
+    catch (std::bad_any_cast& e) {}
 }
 
 void ConvarManager::CreateConvar(std::string cvar_name, EConVarType type, std::string description, int flags, std::any defaultValue, bool min, std::any min_value, bool max, std::any max_value)
 {
     ConVarRefAbstract cvar(cvar_name.c_str());
-    if(cvar.IsValidRef()) return;
+    if (cvar.IsValidRef()) return;
 
     void* cvarptr = nullptr;
     if (type == EConVarType_Int16)
@@ -214,37 +215,37 @@ void ConvarManager::CreateConvar(std::string cvar_name, EConVarType type, std::s
     }
     else if (type == EConVarType_Color)
     {
-        NEW_CVAR_CLASS(Color, "Color_ptr", Color(0,0,0,0));
+        NEW_CVAR_CLASS(Color, "Color_ptr", Color(0, 0, 0, 0));
     }
     else if (type == EConVarType_Vector2)
     {
-        NEW_CVAR_CLASS(Vector2D, "Vector2D_ptr", Vector2D(0.0f,0.0f));
+        NEW_CVAR_CLASS(Vector2D, "Vector2D_ptr", Vector2D(0.0f, 0.0f));
     }
     else if (type == EConVarType_Vector3)
     {
-        NEW_CVAR_CLASS(Vector, "vector_ptr", Vector(0.0f,0.0f,0.0f));
+        NEW_CVAR_CLASS(Vector, "vector_ptr", Vector(0.0f, 0.0f, 0.0f));
     }
     else if (type == EConVarType_Vector4)
     {
-        NEW_CVAR_CLASS(Vector4D, "Vector4D_ptr", Vector4D(0.0f,0.0f,0.0f,0.0f));
+        NEW_CVAR_CLASS(Vector4D, "Vector4D_ptr", Vector4D(0.0f, 0.0f, 0.0f, 0.0f));
     }
     else if (type == EConVarType_Qangle)
     {
-        NEW_CVAR_CLASS(QAngle, "QAngle_ptr", QAngle(0.0f,0.0f,0.0f));
+        NEW_CVAR_CLASS(QAngle, "QAngle_ptr", QAngle(0.0f, 0.0f, 0.0f));
     }
     else if (type == EConVarType_String)
     {
         cvarptr = (void*)(new CConVar<CUtlString>(cvar_name.c_str(), flags, description.c_str(), AnyCastOr<const char*>(defaultValue, ""), min, AnyCastOr<const char*>(min_value, ""), max, AnyCastOr<const char*>(min_value, "")));
     }
 
-    if(!cvarptr) return;
+    if (!cvarptr) return;
 
-    cvarsMap.insert({cvar_name, cvarptr});
+    cvarsMap.insert({ cvar_name, cvarptr });
 }
 
 void ConvarManager::DeleteConvar(std::string cvar_name)
 {
-    if(cvarsMap.find(cvar_name) == cvarsMap.end()) return;
+    if (cvarsMap.find(cvar_name) == cvarsMap.end()) return;
 
     void* cvarptr = cvarsMap.at(cvar_name);
     ConVarRefAbstract cvar(cvar_name.c_str());
@@ -313,4 +314,9 @@ void ConvarManager::DeleteConvar(std::string cvar_name)
     {
         free(cvarptr);
     }
+}
+
+std::map<std::string, void*> ConvarManager::GetCvarMap()
+{
+    return cvarsMap;
 }

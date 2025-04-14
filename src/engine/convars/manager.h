@@ -19,6 +19,8 @@ public:
 
     void CreateConvar(std::string cvar_name, EConVarType type, std::string description, int flags, std::any defaultValue, bool min, std::any min_value, bool max, std::any max_value);
     void DeleteConvar(std::string cvar_name);
+
+    std::map<std::string, void*> GetCvarMap();
 };
 
 template<class T>
@@ -26,7 +28,8 @@ T AnyCastOr(std::any value, T defaultVal)
 {
     try {
         return std::any_cast<T>(value);
-    } catch(std::bad_any_cast& e) {
+    }
+    catch (std::bad_any_cast& e) {
         return defaultVal;
     }
 }
@@ -36,10 +39,11 @@ T AnyCastClassData(std::any value, std::string str, T defaultVal)
 {
     try {
         ClassData* data = std::any_cast<ClassData*>(value);
-        if(!data) return defaultVal;
+        if (!data) return defaultVal;
 
         return data->GetDataOr<T>(str, defaultVal);
-    } catch(std::bad_any_cast& e) {
+    }
+    catch (std::bad_any_cast& e) {
         return defaultVal;
     }
 }

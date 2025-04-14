@@ -68,6 +68,11 @@ Player::Player(bool m_isFakeClient, int m_slot, const char* m_name, uint64_t m_x
     centerMessageEvent->SetInt("userid", slot);
 
     if (!isFakeClient) playerListener = g_GameData.FetchSignature<GetLegacyGameEventListener>("LegacyGameEventListener")(CPlayerSlot(slot));
+
+    SetInternalVar("tag", std::string(""));
+    SetInternalVar("tagcolor", std::string("{default}"));
+    SetInternalVar("namecolor", std::string("{teamcolor}"));
+    SetInternalVar("chatcolor", std::string("{default}"));
 }
 
 Player::~Player()
@@ -75,7 +80,7 @@ Player::~Player()
     isFakeClient = true;
     g_gameEventManager->FreeEvent(centerMessageEvent);
 
-    if(playerObject) delete playerObject;
+    if (playerObject) delete playerObject;
 }
 
 bool Player::IsFakeClient()
@@ -109,7 +114,7 @@ void Player::SetFirstSpawn(bool value) {
 void* Player::GetController()
 {
     CEntityInstance* controller = g_pEntitySystem->GetEntityInstance(CEntityIndex(slot + 1));
-    if(!controller) return nullptr;
+    if (!controller) return nullptr;
 
     return (void*)controller;
 }
@@ -117,7 +122,7 @@ void* Player::GetController()
 void* Player::GetPawn()
 {
     auto controller = GetController();
-    if(!controller) return nullptr;
+    if (!controller) return nullptr;
 
     CHandle<CEntityInstance> pawnHandle = schema::GetProp<CHandle<CEntityInstance>>(controller, "CBasePlayerController", "m_hPawn");
     return (void*)(pawnHandle.Get());
@@ -126,7 +131,7 @@ void* Player::GetPawn()
 void* Player::GetPlayerPawn()
 {
     auto controller = GetController();
-    if(!controller) return nullptr;
+    if (!controller) return nullptr;
 
     CHandle<CEntityInstance> pawnHandle = schema::GetProp<CHandle<CEntityInstance>>(controller, "CCSPlayerController", "m_hPlayerPawn");
     return (void*)(pawnHandle.Get());
@@ -135,17 +140,17 @@ void* Player::GetPlayerPawn()
 const char* Player::GetName()
 {
     auto controller = GetController();
-    if(!controller) return name;
+    if (!controller) return name;
 
     return schema::GetPropPtr<char>(controller, "CBasePlayerController", "m_iszPlayerName");
 }
 
 uint64_t Player::GetSteamID()
 {
-    if(IsFakeClient()) return 0;
+    if (IsFakeClient()) return 0;
 
     auto controller = GetController();
-    if(!controller) return xuid;
+    if (!controller) return xuid;
 
     return schema::GetProp<uint64_t>(controller, "CBasePlayerController", "m_steamID");
 }
@@ -194,9 +199,9 @@ void Player::SendMsg(int dest, const char* msg, ...)
         CSingleRecipientFilter filter(GetSlot());
         g_pGameEventSystem->PostEventAbstract(-1, false, &filter, pNetMsg, data, 0);
 
-        #ifndef _WIN32
+#ifndef _WIN32
         delete data;
-        #endif
+#endif
     }
     else if (dest == HUD_PRINTCENTER)
     {
@@ -238,18 +243,19 @@ void Player::SendMsg(int dest, const char* msg, ...)
 
 void Player::Think()
 {
-    if(centerMessageEndTime != 0) {
-        if(centerMessageEndTime >= GetTime()) {
-            if(centerMessageEvent && playerListener) {
+    if (centerMessageEndTime != 0) {
+        if (centerMessageEndTime >= GetTime()) {
+            if (centerMessageEvent && playerListener) {
                 playerListener->FireGameEvent(centerMessageEvent);
             }
-        } else {
+        }
+        else {
             centerMessageEndTime = 0;
         }
     }
 
     auto observerServices = schema::GetProp<void*>(GetPawn(), "CBasePlayerPawn", "m_pObserverServices");
-    if(observerServices) {
+    if (observerServices) {
         CHandle<CEntityInstance> observerTarget = schema::GetProp<CHandle<CEntityInstance>>(observerServices, "CPlayer_ObserverServices", "m_hObserverTarget");
         g_VGUI.CheckRenderForPlayer(slot, this, observerTarget);
     }
@@ -317,26 +323,26 @@ void Player::ChangeTeam(int team)
 Vector Player::GetCoords()
 {
     void* pawn = GetPlayerPawn();
-    if (!pawn) return Vector(0.0,0.0,0.0);
+    if (!pawn) return Vector(0.0, 0.0, 0.0);
 
     void* bodyComponent = schema::GetProp<void*>(pawn, "CBaseEntity", "m_CBodyComponent");
-    if(bodyComponent) return Vector(0.0,0.0,0.0); 
+    if (bodyComponent) return Vector(0.0, 0.0, 0.0);
 
     void* sceneNode = schema::GetProp<void*>(bodyComponent, "CBodyComponent", "m_pSceneNode");
-    if(!sceneNode) return Vector(0.0,0.0,0.0);
+    if (!sceneNode) return Vector(0.0, 0.0, 0.0);
 
     return schema::GetProp<Vector>(sceneNode, "CGameSceneNode", "m_vecAbsOrigin");
 }
 
 void Player::SetCoords(float x, float y, float z)
 {
-    return SetCoords(Vector(x,y,z));
+    return SetCoords(Vector(x, y, z));
 }
 
 void Player::SetCoords(Vector vec)
 {
     auto instance = GetPawn();
-    if(!instance) return;
+    if (!instance) return;
 
     CALL_VIRTUAL(void, g_GameData.GetOffset("CBaseEntity_Teleport"), instance, &vec, nullptr, nullptr);
 }
@@ -360,34 +366,34 @@ void Player::SetClientConvar(std::string cmd, std::string val)
 void* Player::EnsureCustomView(int index)
 {
     auto pawn = GetPlayerPawn();
-    if(!pawn) return nullptr;
+    if (!pawn) return nullptr;
 
-    if(schema::GetProp<uint32_t>(pawn, "CBaseEntity", "m_lifeState") == 2) {
+    if (schema::GetProp<uint32_t>(pawn, "CBaseEntity", "m_lifeState") == 2) {
         auto controller = GetController();
-        if(!controller) return nullptr;
-        if(schema::GetProp<bool>(controller, "CCSPlayerController", "m_bControllingBot")) return nullptr;
+        if (!controller) return nullptr;
+        if (schema::GetProp<bool>(controller, "CCSPlayerController", "m_bControllingBot")) return nullptr;
 
         auto observerServices = schema::GetProp<void*>(pawn, "CBasePlayerPawn", "m_pObserverServices");
-        if(!observerServices) return nullptr;
+        if (!observerServices) return nullptr;
 
         CHandle<CEntityInstance> observerTarget = schema::GetProp<CHandle<CEntityInstance>>(observerServices, "CPlayer_ObserverServices", "m_hObserverTarget");
-        if(!observerTarget) return nullptr;
+        if (!observerTarget) return nullptr;
 
         auto observerController = schema::GetProp<CHandle<CEntityInstance>>(observerTarget.Get(), "CCSPlayerPawnBase", "m_hOriginalController");
-        if(!observerController) return nullptr;
+        if (!observerController) return nullptr;
 
         CHandle<CEntityInstance> pawnHandle = schema::GetProp<CHandle<CEntityInstance>>(observerController, "CCSPlayerController", "m_hPlayerPawn");
-        if(!pawnHandle) return nullptr;
+        if (!pawnHandle) return nullptr;
         pawn = (void*)(pawnHandle.Get());
     }
 
-    if(!pawn) return nullptr;
+    if (!pawn) return nullptr;
 
     void* vmServices = schema::GetProp<void*>(pawn, "CCSPlayerPawnBase", "m_pViewModelServices");
-    if(!vmServices) return nullptr;
+    if (!vmServices) return nullptr;
 
     auto vmHandle = (void*)(schema::GetPropPtr<CHandle<CEntityInstance>>(vmServices, "CCSPlayer_ViewModelServices", "m_hViewModel")[index].Get());
-    if(!vmHandle) {
+    if (!vmHandle) {
         vmHandle = g_entSystem.CreateByName("predicted_viewmodel");
         g_entSystem.Spawn(vmHandle, nullptr);
         schema::GetPropPtr<CHandle<CEntityInstance>>(vmServices, "CCSPlayer_ViewModelServices", "m_hViewModel")[index].Set((CEntityInstance*)(vmHandle));

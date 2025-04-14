@@ -1,6 +1,84 @@
 #include <public/irecipientfilter.h>
 
-class CSingleRecipientFilter : public IRecipientFilter
+class CRecipientFilter : public IRecipientFilter
+{
+public:
+    CRecipientFilter(NetChannelBufType_t nBufType = BUF_RELIABLE, bool bInitMessage = false) : m_nBufType(nBufType), m_bInitMessage(bInitMessage) {}
+
+    ~CRecipientFilter() override {}
+
+    NetChannelBufType_t GetNetworkBufType(void) const override
+    {
+        return m_nBufType;
+    }
+
+    bool IsInitMessage(void) const override
+    {
+        return m_bInitMessage;
+    }
+
+    int GetRecipientCount(void) const override
+    {
+        return m_Recipients.Count();
+    }
+
+    CPlayerSlot GetRecipientIndex(int slot) const override
+    {
+        if (slot < 0 || slot >= GetRecipientCount())
+        {
+            return CPlayerSlot(-1);
+        }
+
+        return m_Recipients[slot];
+    }
+
+    void AddRecipient(CPlayerSlot slot)
+    {
+        if (m_Recipients.Find(slot) != m_Recipients.InvalidIndex())
+            return;
+
+        m_Recipients.AddToTail(slot);
+    }
+
+    void AddAllPlayers()
+    {
+        m_Recipients.RemoveAll();
+
+        for (int i = 0; i <= engine->GetServerGlobals()->maxClients; i++)
+            if(engine->IsClientFullyAuthenticated(i))
+                AddRecipient(i);
+    }
+
+    void RemoveRecipient(CPlayerSlot slot)
+    {
+        if (m_Recipients.Find(slot) == m_Recipients.InvalidIndex())
+            return;
+
+        m_Recipients.FindAndRemove(slot);
+    }
+
+private:
+    // Can't copy this unless we explicitly do it!
+    CRecipientFilter(CRecipientFilter const& source)
+    {
+        Assert(0);
+    }
+
+    NetChannelBufType_t m_nBufType;
+    bool m_bInitMessage;
+    CUtlVectorFixed<CPlayerSlot, 64> m_Recipients;
+};
+
+class CBroadcastRecipientFilter : public CRecipientFilter
+{
+public:
+    CBroadcastRecipientFilter(void)
+    {
+        AddAllPlayers();
+    }
+};
+
+class CSingleRecipientFilter : public CRecipientFilter
 {
 public:
     CSingleRecipientFilter(int iRecipient, bool bReliable = true, bool bInitMessage = false) : m_bReliable(bReliable), m_bInitMessage(bInitMessage), m_iRecipient(iRecipient) {}

@@ -32,6 +32,21 @@ for sdk_target in MMSPlugin.sdk_targets:
 
   binary.sources += [
     'src/core/entrypoint.cpp',
+    "src/core/commands/chat.cpp",
+    "src/core/commands/cmds.cpp",
+    "src/core/commands/config.cpp",
+    "src/core/commands/core.cpp",
+    "src/core/commands/credits.cpp",
+    "src/core/commands/cvars.cpp",
+    "src/core/commands/exts.cpp",
+    "src/core/commands/help.cpp",
+    "src/core/commands/list.cpp",
+    "src/core/commands/plugins.cpp",
+    "src/core/commands/resmon.cpp",
+    "src/core/commands/status.cpp",
+    "src/core/commands/translations.cpp",
+    "src/core/commands/utils.cpp",
+    "src/core/commands/version.cpp",
     'src/core/configuration/setup.cpp',
     'src/core/console/console.cpp',
 
@@ -45,9 +60,14 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/engine/vgui/screentext.cpp',
     'src/engine/vgui/vgui.cpp',
+    
+    'src/engine/voicemanager/manager.cpp',
 
     'src/entities/system.cpp',
     'src/entities/listener.cpp',
+
+    'src/extensions/manager.cpp',
+    'src/extensions/extension.cpp',
 
     'src/filesystem/files/files.cpp',
     'src/filesystem/logs/logger.cpp',
@@ -55,6 +75,8 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/memory/encoders/json.cpp',
     'src/memory/gamedata/gamedata.cpp',
+
+    'src/network/usermessages/usermessage.cpp',
 
     'src/plugins/manager.cpp',
     'src/plugins/object.cpp',
@@ -70,6 +92,8 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/scripting/memory/memory.cpp',
     'src/scripting/memory/keyvalues/centitykeyvalues.cpp',
+
+    'src/scripting/network/usermessage.cpp',
 
     'src/scripting/player/manager.cpp',
     'src/scripting/player/player.cpp',
@@ -88,6 +112,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/server/commands.cpp',
     'src/scripting/server/configuration.cpp',
     'src/scripting/server/translations.cpp',
+    'src/scripting/server/utils.cpp',
 
     'src/scripting/core.cpp',
     'src/scripting/stack.cpp',
@@ -95,6 +120,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/sdk/access.cpp',
     'src/sdk/schema.cpp',
     'src/sdk/game.cpp',
+
+    'src/server/chat/chat.cpp',
 
     'src/server/commands/command.cpp',
     'src/server/commands/manager.cpp',
@@ -111,9 +138,11 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/tools/crashreporter/crashreporter.cpp',
     'src/tools/resourcemonitor/monitor.cpp',
     
+    'src/utils/utils.cpp',
+    'src/utils/memory_win.cpp',
+    'src/utils/memory_linux.cpp',
     'src/utils/platform/platform_win.cpp',
     'src/utils/platform/platform_linux.cpp',
-    'src/utils/utils.cpp',
 
     "vendor/dynlibutils/module.cpp",
 

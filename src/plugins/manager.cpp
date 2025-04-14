@@ -2,6 +2,7 @@
 
 #include <utils/utils.h>
 #include <filesystem/files/files.h>
+#include <extensions/manager.h>
 
 bool alreadyStarted = false;
 
@@ -109,9 +110,9 @@ void PluginsManager::StartPlugins()
     ExecuteEvent("core", "OnAllPluginsLoaded", {}, {});
     alreadyStarted = true;
 
-    // for(auto extension : extManager->GetExtensionsList())
-    // if(extension->IsLoaded())
-    // extension->GetAPI()->AllPluginsLoaded();
+    for (auto extension : extManager.GetExtensionsList())
+        if (extension->IsLoaded())
+            extension->GetAPI()->AllPluginsLoaded();
 }
 
 EventResult PluginsManager::ExecuteEvent(std::string invokedBy, std::string eventName, std::vector<std::any> eventPayload, ClassData* eventObject)

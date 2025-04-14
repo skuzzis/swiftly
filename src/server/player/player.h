@@ -22,7 +22,7 @@ private:
     const char* name;
     uint64_t xuid;
     std::string ip_address = "0.0.0.0";
-    
+
     bool firstSpawn = true;
 
     int m_listenMap[66] = {};
@@ -82,6 +82,8 @@ public:
     ClassData* GetPlayerObject();
 
     void Think();
+
+    CPlayerBitVec m_selfMutes[64] = {};
 };
 
 #endif

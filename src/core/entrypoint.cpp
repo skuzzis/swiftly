@@ -26,6 +26,10 @@
 
 #include <memory/gamedata/gamedata.h>
 
+#include <extensions/manager.h>
+#include <server/chat/chat.h>
+#include <engine/voicemanager/manager.h>
+
 #include <plugins/manager.h>
 
 #include <sdk/access.h>
@@ -58,6 +62,9 @@ SH_DECL_HOOK6(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, CPlayerSl
 SH_DECL_HOOK7_void(ISource2GameEntities, CheckTransmit, SH_NOATTRIB, 0, CCheckTransmitInfo**, int, CBitVec<16384>&, const Entity2Networkable_t**, const uint16_t*, int, bool);
 SH_DECL_HOOK6_void(IServerGameClients, OnClientConnected, SH_NOATTRIB, 0, CPlayerSlot, const char*, uint64_t, const char*, const char*, bool);
 SH_DECL_HOOK5_void(IServerGameClients, ClientDisconnect, SH_NOATTRIB, 0, CPlayerSlot, ENetworkDisconnectionReason, const char*, uint64_t, const char*);
+SH_DECL_HOOK8_void(IGameEventSystem, PostEventAbstract, SH_NOATTRIB, 0, CSplitScreenSlot, bool, int, const uint64*, INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t);
+SH_DECL_HOOK3(IVEngineServer2, SetClientListening, SH_NOATTRIB, 0, bool, CPlayerSlot, CPlayerSlot, bool);
+SH_DECL_HOOK2_void(IServerGameClients, ClientCommand, SH_NOATTRIB, 0, CPlayerSlot, const CCommand&);
 
 //////////////////////////////////////////////////////////////
 /////////////////  Core Variables & Functions  //////////////
@@ -97,6 +104,9 @@ CvarQuery g_convarQuery;
 ConvarManager g_cvarManager;
 CallStackManager g_callStack;
 ResourceMonitor g_ResourceMonitor;
+ExtensionManager extManager;
+ChatProcessor g_chatProcessor;
+VoiceManager g_voiceManager;
 
 std::map<std::string, std::string> gameEventsRegister;
 
@@ -155,8 +165,12 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     g_playerManager.Initialize();
     g_commandsManager.Initialize();
     g_VGUI.Initialize();
+    g_chatProcessor.Initialize();
+    g_voiceManager.OnAllInitialized();
 
     g_translations.LoadTranslations();
+
+    extManager.LoadExtensions();
 
     g_pluginManager.LoadPlugins("");
     g_pluginManager.StartPlugins();
@@ -178,12 +192,15 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
     g_pluginManager.StopPlugins(false);
     g_pluginManager.UnloadPlugins();
 
+    extManager.UnloadExtensions();
     g_convarQuery.Shutdown();
     g_eventManager.Shutdown();
     g_entSystem.Shutdown();
     g_playerManager.Shutdown();
     g_commandsManager.Shutdown();
     g_VGUI.Shutdown();
+    g_chatProcessor.Shutdown();
+    g_voiceManager.OnShutdown();
 
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
@@ -195,7 +212,7 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
 
 void SwiftlyS2::RegisterTimeout(int64_t delay, std::function<void()> callback)
 {
-    timeoutsArray.push_back({ delay, callback });
+    timeoutsArray.push_back({ GetTime() + delay, callback });
     processingTimeouts = true;
 }
 

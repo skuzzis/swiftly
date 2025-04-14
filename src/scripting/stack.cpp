@@ -84,6 +84,16 @@ EValue SerializeData(std::any data, EContext* state)
             return EValue(state, nullptr);
         else if (value.type() == typeid(EValue))
             return std::any_cast<EValue>(value);
+        else if(value.type() == typeid(Vector))
+            return EValue(state, std::any_cast<Vector>(value));
+        else if(value.type() == typeid(Vector2D))
+            return EValue(state, std::any_cast<Vector2D>(value));
+        else if(value.type() == typeid(Vector4D))
+            return EValue(state, std::any_cast<Vector4D>(value));
+        else if(value.type() == typeid(Color))
+            return EValue(state, std::any_cast<Color>(value));
+        else if(value.type() == typeid(QAngle))
+            return EValue(state, std::any_cast<QAngle>(value));
         else if(value.type() == typeid(ClassData*)) {
             ClassData* data = std::any_cast<ClassData*>(value);
             EValue val(state, data);

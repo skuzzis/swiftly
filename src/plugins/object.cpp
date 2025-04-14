@@ -9,6 +9,8 @@
 #include <tools/crashreporter/callstack.h>
 #include <tools/resourcemonitor/monitor.h>
 
+#include <extensions/manager.h>
+
 PluginObject::PluginObject(std::string m_name, ContextKinds m_kind)
 {
     name = m_name;
@@ -163,6 +165,17 @@ bool PluginObject::LoadScriptingEnvironment()
 
     SetupScriptingEnvironment(*this, ctx);
 
+    for (Extension* ext : extManager.GetExtensionsList())
+        if (ext->IsLoaded()) {
+            std::string error = "";
+            if (!ext->GetAPI()->OnPluginLoad(GetName(), ctx, (PluginKind_t)GetKind(), error)) {
+                PRINTF("Failed to load plugin '%s'.\n", GetName().c_str());
+                PRINTF("Error: %s.\n", error.c_str());
+                SetLoadError(error);
+                return false;
+            }
+        }
+
     std::vector<std::string> scriptingFiles = Files::FetchFileNames("addons/swiftly/bin/scripting");
     for (std::string file : scriptingFiles)
     {
@@ -286,15 +299,15 @@ bool PluginObject::ExecuteStart()
 
 bool PluginObject::ExecuteStop()
 {
-    // for (Extension* ext : extManager->GetExtensionsList())
-    //     if (ext->IsLoaded()) {
-    //         std::string error = "";
-    //         if (!ext->GetAPI()->OnPluginUnload(GetName(), ctx, GetKind(), error)) {
-    //             PRINTF("Failed to unload plugin '%s'.\n", GetName().c_str());
-    //             PRINTF("Error: %s.\n", error.c_str());
-    //             return false;
-    //         }
-    //     }
+    for (Extension* ext : extManager.GetExtensionsList())
+        if (ext->IsLoaded()) {
+            std::string error = "";
+            if (!ext->GetAPI()->OnPluginUnload(GetName(), ctx, (PluginKind_t)GetKind(), error)) {
+                PRINTF("Failed to unload plugin '%s'.\n", GetName().c_str());
+                PRINTF("Error: %s.\n", error.c_str());
+                return false;
+            }
+        }
 
     TriggerEvent("core", "OnPluginStop", {}, {});
 
