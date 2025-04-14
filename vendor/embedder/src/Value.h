@@ -353,18 +353,22 @@ public:
             StackCallFunc callstack;
             callstack.count = sizeof...(Params);
             callstack.items = 0;
-            if(callstack.count > 0)
+            if (callstack.count > 0)
                 callstack.args = (JSValue*)malloc(callstack.count * sizeof(JSValue));
+            else
+                callstack.args = nullptr;
 
             pushJSArguments(callstack, std::forward<Params>(params)...);
 
             JSValue result = JS_Call(state, m_val, JS_UNDEFINED, callstack.items, callstack.args);
 
-            for (size_t i = 0; i < callstack.items; i++) {
-                JS_FreeValue(state, callstack.args[i]);
-            }
+            if (callstack.args != nullptr) {
+                for (size_t i = 0; i < callstack.items; i++) {
+                    JS_FreeValue(state, callstack.args[i]);
+                }
 
-            free(callstack.args);
+                free(callstack.args);
+            }
 
             if (JS_IsException(result)) EException::Throw(EException(m_ctx->GetState(), m_ctx->GetKind(), -1));
 
@@ -448,6 +452,8 @@ private:
     template<typename T, typename... Params>
     void pushJSArguments(StackCallFunc& data, T& param, Params&&... params)
     {
+        if (data.args == nullptr) return;
+
         data.args[data.items] = Stack<T>::pushJS(m_ctx, param);
         data.items++;
 

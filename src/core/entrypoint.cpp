@@ -168,6 +168,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     g_chatProcessor.Initialize();
     g_voiceManager.OnAllInitialized();
 
+    g_chatProcessor.LoadMessages();
     g_translations.LoadTranslations();
 
     extManager.LoadExtensions();
