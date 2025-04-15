@@ -10,6 +10,7 @@
                 "${workspaceFolder}/src/**",
                 "${workspaceFolder}/vendor/**",
                 "${workspaceFolder}/vendor/bzip2/win64/include/**",
+                "${workspaceFolder}/vendor/dynohook/win64/include/**",
                 "${workspaceFolder}/vendor/embedder/libs/lua/**",
                 "${workspaceFolder}/vendor/embedder/libs/js/**"
             ],
@@ -30,6 +31,7 @@
                 "${workspaceFolder}/src/**",
                 "${workspaceFolder}/vendor/**",
                 "${workspaceFolder}/vendor/bzip2/linuxsteamrt64/include/**",
+                "${workspaceFolder}/vendor/dynohook/linuxsteamrt64/include/**",
                 "${workspaceFolder}/vendor/embedder/libs/lua/**",
                 "${workspaceFolder}/vendor/embedder/libs/js/**"
             ],

@@ -75,6 +75,9 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/memory/encoders/json.cpp',
     'src/memory/gamedata/gamedata.cpp',
+    'src/memory/hooks/manager.cpp',
+    'src/memory/hooks/functions.cpp',
+    'src/memory/hooks/vfunctions.cpp',
 
     'src/network/database/DatabaseManager.cpp',
     'src/network/usermessages/usermessage.cpp',
@@ -85,6 +88,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/engine/convars.cpp',
     'src/scripting/engine/entities.cpp',
     'src/scripting/engine/events.cpp',
+    'src/scripting/engine/gameevents.cpp',
     'src/scripting/engine/precacher.cpp',
     'src/scripting/engine/server.cpp',
     'src/scripting/engine/vgui.cpp',
@@ -167,6 +171,10 @@ for sdk_target in MMSPlugin.sdk_targets:
   if binary.compiler.target.platform == 'linux':
     binary.compiler.postlink += [
       os.path.join(builder.sourcePath, 'vendor', 'bzip2', 'linuxsteamrt64', 'lib', 'libbz2.a'),
+      os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'linuxsteamrt64', 'lib', 'libasmjit.a'),
+      os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'linuxsteamrt64', 'lib', 'libasmtk.a'),
+      os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'linuxsteamrt64', 'lib', 'libdynohook.a'),
+      os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'linuxsteamrt64', 'lib', 'libZydis.a'),
 
       "-lgnutls",
 			"-lz",
@@ -221,6 +229,10 @@ for sdk_target in MMSPlugin.sdk_targets:
   else:
     binary.compiler.postlink += [
       os.path.join(builder.sourcePath, 'vendor', 'bzip2', 'win64', 'lib', 'bz2.lib'),
+      os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'win64', 'lib', 'asmtk.lib'),
+      os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'win64', 'lib', 'asmjit.lib'),
+      os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'win64', 'lib', 'dynohook.lib'),
+      os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'win64', 'lib', 'Zydis.lib'),
 
       "psapi.lib",
       "winmm.lib",
@@ -285,6 +297,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     os.path.join(builder.sourcePath, 'vendor'),
     os.path.join(builder.sourcePath, 'vendor', 'lua-rapidjson', 'rapidjson', 'include'),
     os.path.join(builder.sourcePath, 'vendor', 'bzip2', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include'),
+    os.path.join(builder.sourcePath, 'vendor', 'dynohook', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include'),
+    os.path.join(builder.sourcePath, 'vendor', 'dynohook', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include', 'dynohook'),
     
     os.path.join(builder.sourcePath, 'src'),
 

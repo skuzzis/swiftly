@@ -1,19 +1,23 @@
 local eventHandlers = {}
 local table_unpack = table.unpack
 
-AddGlobalEvents(function(event, eventName, eventData)
-    if not eventHandlers[eventName] then return EventResult.Continue end
-    if #eventHandlers[eventName] <= 0 then return EventResult.Continue end
-
+local function CallEventCallbacks(event, eventName, ...)
     for i = 1, #eventHandlers[eventName] do
         local handle = eventHandlers[eventName][i].handle
         if type(handle) == "function" then
-            local result = (handle(event, table_unpack(eventData)) or EventResult.Continue)
+            local result = (handle(event, ...) or EventResult.Continue)
             if result ~= EventResult.Continue then return result end
         end
     end
 
     return EventResult.Continue
+end
+
+AddGlobalEvents(function(event, eventName, eventData)
+    if not eventHandlers[eventName] then return EventResult.Continue end
+    if #eventHandlers[eventName] <= 0 then return EventResult.Continue end
+
+    return CallEventCallbacks(event, eventName, table_unpack(eventData))
 end)
 
 local eventRegistryIndex = 50

@@ -26,6 +26,7 @@
 #include <filesystem/logs/logger.h>
 
 #include <memory/gamedata/gamedata.h>
+#include <memory/hooks/manager.h>
 
 #include <extensions/manager.h>
 #include <server/chat/chat.h>
@@ -112,6 +113,7 @@ ChatProcessor g_chatProcessor;
 VoiceManager g_voiceManager;
 MenuManager g_MenuManager;
 DatabaseManager g_dbManager;
+HookManager g_hookManager;
 
 std::map<std::string, std::string> gameEventsRegister;
 
@@ -171,6 +173,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     g_commandsManager.Initialize();
     g_VGUI.Initialize();
     g_chatProcessor.Initialize();
+    g_hookManager.Initialize();
     g_voiceManager.OnAllInitialized();
 
     g_chatProcessor.LoadMessages();
@@ -208,6 +211,7 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
     g_commandsManager.Shutdown();
     g_VGUI.Shutdown();
     g_chatProcessor.Shutdown();
+    g_hookManager.Shutdown();
     g_voiceManager.OnShutdown();
 
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
