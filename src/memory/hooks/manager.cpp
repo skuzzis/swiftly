@@ -1,5 +1,7 @@
 #include "manager.h"
 
+#include <swiftly-ext/core.h>
+
 dyno::DataObject GetDataObject(char arg)
 {
     if (arg == 'p')
@@ -57,4 +59,55 @@ void HookManager::AddToQueue(VFunctionHook* hook)
 {
     if (initialized) hook->Initialize();
     vfunchookQueue.push_back(hook);
+}
+
+EXT_API void* swiftly_FunctionHook_Init(const char* sig, bool cbtype, void* cb, const char* func_args, char return_val)
+{
+    return new FunctionHook(std::string(sig), (dyno::CallbackType)cbtype, reinterpret_cast<dyno::CallbackHandler>(cb), func_args, return_val);
+}
+
+EXT_API void* swiftly_FunctionHook_InitPtr(void* sig, bool cbtype, void* cb, const char* func_args, char return_val)
+{
+    return new FunctionHook(sig, (dyno::CallbackType)cbtype, reinterpret_cast<dyno::CallbackHandler>(cb), func_args, return_val);
+}
+
+EXT_API void swiftly_FunctionHook_Destroy(void* ptr)
+{
+    FunctionHook* fhook = (FunctionHook*)ptr;
+    delete fhook;
+}
+
+EXT_API void swiftly_FunctionHook_Enable(void* ptr)
+{
+    FunctionHook* fhook = (FunctionHook*)ptr;
+    fhook->Enable();
+}
+
+EXT_API void swiftly_FunctionHook_Disable(void* ptr)
+{
+    FunctionHook* fhook = (FunctionHook*)ptr;
+    fhook->Disable();
+}
+
+EXT_API void* swiftly_VFunctionHook_Init(const char* lib, const char* vtable, const char* offset, bool cbtype, void* func, const char* function_args, char return_val)
+{
+    return new VFunctionHook(lib, vtable, offset, (dyno::CallbackType)cbtype, reinterpret_cast<dyno::CallbackHandler>(func), function_args, return_val);
+}
+
+EXT_API void swiftly_VFunctionHook_Destroy(void* ptr)
+{
+    VFunctionHook* vhook = (VFunctionHook*)ptr;
+    delete vhook;
+}
+
+EXT_API void swiftly_VFunctionHook_Enable(void* ptr)
+{
+    VFunctionHook* vhook = (VFunctionHook*)ptr;
+    vhook->Enable();
+}
+
+EXT_API void swiftly_VFunctionHook_Disable(void* ptr)
+{
+    VFunctionHook* vhook = (VFunctionHook*)ptr;
+    vhook->Disable();
 }
