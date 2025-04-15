@@ -76,6 +76,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/memory/encoders/json.cpp',
     'src/memory/gamedata/gamedata.cpp',
 
+    'src/network/database/DatabaseManager.cpp',
     'src/network/usermessages/usermessage.cpp',
 
     'src/plugins/manager.cpp',
@@ -93,6 +94,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/memory/memory.cpp',
     'src/scripting/memory/keyvalues/centitykeyvalues.cpp',
 
+    'src/scripting/network/database.cpp',
     'src/scripting/network/usermessage.cpp',
 
     'src/scripting/player/manager.cpp',

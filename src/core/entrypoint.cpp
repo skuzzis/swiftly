@@ -38,6 +38,8 @@
 
 #include <schemasystem/schemasystem.h>
 
+#include <network/database/DatabaseManager.h>
+
 #include <tools/crashreporter/callstack.h>
 #include <tools/crashreporter/crashreporter.h>
 #include <tools/resourcemonitor/monitor.h>
@@ -109,6 +111,7 @@ ExtensionManager extManager;
 ChatProcessor g_chatProcessor;
 VoiceManager g_voiceManager;
 MenuManager g_MenuManager;
+DatabaseManager g_dbManager;
 
 std::map<std::string, std::string> gameEventsRegister;
 
@@ -174,6 +177,8 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     g_translations.LoadTranslations();
 
     extManager.LoadExtensions();
+
+    g_dbManager.LoadDatabases();
 
     g_pluginManager.LoadPlugins("");
     g_pluginManager.StartPlugins();

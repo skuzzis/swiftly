@@ -7,3 +7,4 @@ commands = Commands()
 config = Configuration()
 vgui = VGUI()
 convar = Convars()
+db = nil

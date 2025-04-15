@@ -7,3 +7,4 @@ globalThis.commands = Commands()
 globalThis.config = Configuration()
 globalThis.vgui = VGUI()
 globalThis.convar = Convars()
+globalThis.db = null
