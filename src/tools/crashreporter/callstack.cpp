@@ -1,5 +1,7 @@
 #include "callstack.h"
 
+#include <swiftly-ext/core.h>
+
 uint64_t stackID = 0;
 
 uint64_t CallStackManager::RegisterPluginCallstack(std::string plugin_name, std::string stackMsg)
@@ -22,4 +24,14 @@ void CallStackManager::UnregisterPluginCallstack(std::string plugin_name, uint64
 std::unordered_map<uint64_t, std::string> CallStackManager::GetPluginCallstack(std::string plugin_name)
 {
     return callStacks[plugin_name];
+}
+
+EXT_API uint64_t swiftly_RegisterCallstack(const char* plugin_name, const char* stackmsg)
+{
+    return g_callStack.RegisterPluginCallstack(plugin_name, stackmsg);
+}
+
+EXT_API void swiftly_UnregisterCallstack(const char* plugin_name, uint64_t stid)
+{
+    g_callStack.UnregisterPluginCallstack(plugin_name, stid);
 }

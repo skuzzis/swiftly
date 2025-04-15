@@ -1,5 +1,6 @@
 #include "system.h"
 #include <memory/gamedata/gamedata.h>
+#include <swiftly-ext/core.h>
 
 typedef void (*CBaseEntity_DispatchSpawn)(void*, void*);
 typedef void (*UTIL_Remove)(void*);
@@ -12,6 +13,11 @@ void* gameRules = nullptr;
 CGameEntitySystem* GameEntitySystem()
 {
     return g_pGameEntitySystem;
+}
+
+EXT_API void* swiftly_GameEntitySystem()
+{
+    return (void*)GameEntitySystem();
 }
 
 void EntitySystem::Initialize()
@@ -43,7 +49,7 @@ void EntitySystem::Spawn(void* entity, void* keyvalues)
 {
     g_GameData.FetchSignature<CBaseEntity_DispatchSpawn>("CBaseEntity_DispatchSpawn")(entity, keyvalues);
 
-    if(entKeyVal.find(entity) != entKeyVal.end()) delete (CEntityKeyValues*)entKeyVal[entity];
+    if (entKeyVal.find(entity) != entKeyVal.end()) delete (CEntityKeyValues*)entKeyVal[entity];
     entKeyVal[entity] = keyvalues;
 }
 

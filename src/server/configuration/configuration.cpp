@@ -8,6 +8,8 @@
 #include <sdk/game.h>
 #include <cstddef>
 
+#include <swiftly-ext/core.h>
+
 bool followServerGuidelines = true;
 
 bool ConfigurationError(std::string configuration_file, std::string error)
@@ -423,7 +425,7 @@ void RegisterConfigurationVector(bool& wasCreated, rapidjson::Document& document
 bool Configuration::LoadConfiguration()
 {
     auto coreConfigFile = encoders::json::FromString(Files::Read("addons/swiftly/configs/core.json"), "addons/swiftly/configs/core.json");
-    if(!coreConfigFile.IsObject()) {
+    if (!coreConfigFile.IsObject()) {
         return ConfigurationError("core.json", "Core configuration file needs to be an object.");
     }
 
@@ -442,7 +444,7 @@ bool Configuration::LoadConfiguration()
     RegisterConfigurationVector<std::string>(wasEdited, coreConfigFile, "core", "core", "commandSilentPrefixes", { "/" }, true, " ");
     RegisterConfigurationVector<std::string>(wasEdited, coreConfigFile, "core", "core", "patches_to_perform", {}, true, " ");
 
-    if(GetGameName() == "cs2") RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "CS2ServerGuidelines", "https://blog.counter-strike.net/index.php/server_guidelines/");
+    if (GetGameName() == "cs2") RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "CS2ServerGuidelines", "https://blog.counter-strike.net/index.php/server_guidelines/");
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", string_format("Follow%sServerGuidelines", str_toupper(GetGameName()).c_str()), true);
 
     followServerGuidelines = FetchValue<bool>(string_format("core.Follow%sServerGuidelines", str_toupper(GetGameName()).c_str()));
@@ -469,13 +471,13 @@ bool Configuration::LoadConfiguration()
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.buttons.exit.button", "tab");
 
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.kind", "screen");
-    RegisterConfigurationVector<std::string>(wasEdited, coreConfigFile, "core", "core", "menu.available_kinds", {"screen", "center"}, true, " ");
+    RegisterConfigurationVector<std::string>(wasEdited, coreConfigFile, "core", "core", "menu.available_kinds", { "screen", "center" }, true, " ");
 
-    RegisterConfigurationVector<std::string>(wasEdited, coreConfigFile, "core", "core", "menu.available_inputmodes", {"chat", "button"}, true, " ");
+    RegisterConfigurationVector<std::string>(wasEdited, coreConfigFile, "core", "core", "menu.available_inputmodes", { "chat", "button" }, true, " ");
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.inputMode", "button");
-    
+
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.kind_settings.center.itemsPerPage", 7);
-    
+
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.kind_settings.screen.mode", "compatibility");
 
     RegisterConfiguration<float>(wasEdited, coreConfigFile, "core", "core", "menu.kind_settings.screen.modes.compatibility.x", 0.14);
@@ -487,7 +489,7 @@ bool Configuration::LoadConfiguration()
     RegisterConfiguration<float>(wasEdited, coreConfigFile, "core", "core", "menu.kind_settings.screen.modes.normal.y", 0.68);
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.kind_settings.screen.modes.normal.fontSize", 35);
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.kind_settings.screen.modes.normal.font", "Sans Serif");
-    
+
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.kind_settings.screen.drawBackground", true);
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "menu.kind_settings.screen.itemsPerPage", 9);
 
@@ -496,7 +498,7 @@ bool Configuration::LoadConfiguration()
 
     RegisterConfiguration(wasEdited, coreConfigFile, "core", "core", "vgui.textBackground.textSize", 35);
 
-    if(wasEdited) {
+    if (wasEdited) {
         WriteJSONFile("addons/swiftly/configs/core.json", coreConfigFile);
     }
 
@@ -507,14 +509,14 @@ bool Configuration::LoadConfiguration()
 
 void Configuration::SetArraySize(std::string key, unsigned int size)
 {
-    configArraySizes.insert({key, size});
+    configArraySizes.insert({ key, size });
 }
 
 template <typename T>
 void Configuration::SetValue(std::string key, T value)
 {
     if (config.find(key) == config.end())
-        config.insert({key, value});
+        config.insert({ key, value });
     else
         config[key] = value;
 }
@@ -535,16 +537,16 @@ bool Configuration::IsConfigurationLoaded()
     return loaded;
 }
 
-std::map<std::string, std::any>& Configuration::FetchPluginConfiguration() { 
-    return pluginConfig; 
+std::map<std::string, std::any>& Configuration::FetchPluginConfiguration() {
+    return pluginConfig;
 }
 
-std::map<std::string, std::any>& Configuration::FetchConfiguration() { 
-    return config; 
+std::map<std::string, std::any>& Configuration::FetchConfiguration() {
+    return config;
 }
 
-std::map<std::string, unsigned int> Configuration::FetchConfigArraySizes() { 
-    return configArraySizes; 
+std::map<std::string, unsigned int> Configuration::FetchConfigArraySizes() {
+    return configArraySizes;
 }
 
 bool Configuration::HasKey(std::string key) {
@@ -660,4 +662,15 @@ void Configuration::LoadPluginConfig(std::string key)
 
     g_Config.SetPluginValue(main_key, encoders::json::ToString(root));
     LoadConfigPart(main_key, root);
+}
+
+EXT_API void* swiftly_GetConfigurationValue(const char* key)
+{
+    auto& config = g_Config.FetchConfiguration();
+    if (config.find(key) != config.end()) return (void*)&(config[key]);
+
+    auto& pluginConfig = g_Config.FetchPluginConfiguration();
+    if (pluginConfig.find(key) != pluginConfig.end()) return (void*)&(pluginConfig[key]);
+
+    return nullptr;
 }

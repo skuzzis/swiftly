@@ -9,6 +9,7 @@
 #include <utils/platform/platform.h>
 #include <server/configuration/configuration.h>
 #include <dynlibutils/module.h>
+#include <swiftly-ext/core.h>
 
 #define HAS_MEMBER(DOCUMENT, MEMBER_NAME, MEMBER_PATH)                                \
     if (!DOCUMENT.HasMember(MEMBER_NAME))                                             \
@@ -30,7 +31,7 @@
         SignaturesError(string_format("The field \"%s\" is not a string.", MEMBER_PATH)); \
         continue;                                                                         \
     }
-    
+
 DynLibUtils::CModule DetermineModuleByLibrary(std::string library) {
     if (library == "server")
         return DynLibUtils::CModule(server);
@@ -68,7 +69,7 @@ void GameData::LoadGameData()
 {
     std::string game_name = GetGameName();
 
-    if(game_name == "unknown") {
+    if (game_name == "unknown") {
         PRINTF("Unknown game detected, not loading any game data.\n");
         return;
     }
@@ -80,7 +81,7 @@ void GameData::LoadGameData()
 
 void* GameData::FetchRawSignature(std::string name)
 {
-    if(!ExistsSignature(name)) return nullptr;
+    if (!ExistsSignature(name)) return nullptr;
 
     return signatures[name];
 }
@@ -93,19 +94,19 @@ bool GameData::ExistsSignature(std::string name)
 void GameData::LoadSignatures(std::string game_folder)
 {
     auto files = Files::FetchFileNames("addons/swiftly/gamedata/" + game_folder);
-    for(auto file : files) {
-        if(!ends_with(file, "signatures.json")) continue;
+    for (auto file : files) {
+        if (!ends_with(file, "signatures.json")) continue;
 
         auto j = encoders::json::FromString(Files::Read(file), file);
-        if(!j.IsObject()) {
+        if (!j.IsObject()) {
             SignaturesError(string_format("'%s' needs to contain an object.\n", file.c_str()));
             continue;
         }
 
-        for(auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
+        for (auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
             std::string name = it->name.GetString();
 
-            if(signatures.find(name) != signatures.end()) {
+            if (signatures.find(name) != signatures.end()) {
                 SignaturesError(string_format("The signature for '%s' has been already loaded.", name.c_str()));
                 continue;
             }
@@ -121,7 +122,7 @@ void GameData::LoadSignatures(std::string game_folder)
             std::string lib = it->value["lib"].GetString();
             std::string rawSig = it->value[WIN_LINUX("windows", "linux")].GetString();
             SignaturesError(string_format("Searching for \"%s\"...", rawSig.c_str()));
-            
+
             DynLibUtils::CModule module = DetermineModuleByLibrary(lib);
             void* sig = nullptr;
             if (rawSig.at(0) == '@') sig = module.GetFunctionByName((rawSig.c_str() + 1)).RCast<void*>();
@@ -135,7 +136,7 @@ void GameData::LoadSignatures(std::string game_folder)
 
             SignaturesError(string_format("Found function '%s' (Library '%s') pointing at %p.", name.c_str(), lib.c_str(), sig));
 
-            signatures.insert({name, sig});
+            signatures.insert({ name, sig });
         }
     }
     SignaturesError(string_format("Succesfully loaded %02d signatures.", signatures.size()));
@@ -144,30 +145,30 @@ void GameData::LoadSignatures(std::string game_folder)
 void GameData::LoadOffsets(std::string game_folder)
 {
     auto files = Files::FetchFileNames("addons/swiftly/gamedata/" + game_folder);
-    for(auto file : files) {
-        if(!ends_with(file, "offsets.json")) continue;
+    for (auto file : files) {
+        if (!ends_with(file, "offsets.json")) continue;
 
         auto j = encoders::json::FromString(Files::Read(file), file);
-        if(!j.IsObject()) {
+        if (!j.IsObject()) {
             OffsetsError(string_format("'%s' needs to contain an object.\n", file.c_str()));
             continue;
         }
 
-        for(auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
+        for (auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
             std::string name = it->name.GetString();
 
-            if(offsets.find(name) != offsets.end()) {
+            if (offsets.find(name) != offsets.end()) {
                 OffsetsError(string_format("The offsets for '%s' has been already loaded.", name.c_str()));
                 continue;
             }
 
             HAS_MEMBER(it->value, "windows", string_format("%s.windows", name.c_str()))
-            HAS_MEMBER(it->value, "linux", string_format("%s.linux", name.c_str()))
+                HAS_MEMBER(it->value, "linux", string_format("%s.linux", name.c_str()))
 
-            IS_NUMBER(it->value, "windows", string_format("%s.windows", name.c_str()))
-            IS_NUMBER(it->value, "linux", string_format("%s.linux", name.c_str()))
+                IS_NUMBER(it->value, "windows", string_format("%s.windows", name.c_str()))
+                IS_NUMBER(it->value, "linux", string_format("%s.linux", name.c_str()))
 
-            offsets.insert({name, it->value[WIN_LINUX("windows", "linux")].GetInt()});
+                offsets.insert({ name, it->value[WIN_LINUX("windows", "linux")].GetInt() });
         }
     }
 
@@ -176,7 +177,7 @@ void GameData::LoadOffsets(std::string game_folder)
 
 int GameData::GetOffset(std::string name)
 {
-    if(offsets.find(name) == offsets.end()) return -1;
+    if (offsets.find(name) == offsets.end()) return -1;
     return offsets[name];
 }
 
@@ -212,26 +213,26 @@ byte* HexToByte(const char* src, size_t& length)
     int byteCount = HexStringToUint8Array(src, dest, length);
     if (byteCount <= 0)
         return nullptr;
-    
+
     return (byte*)dest;
 }
 
 void GameData::LoadPatches(std::string game_folder)
 {
     auto files = Files::FetchFileNames("addons/swiftly/gamedata/" + game_folder);
-    for(auto file : files) {
-        if(!ends_with(file, "patches.json")) continue;
+    for (auto file : files) {
+        if (!ends_with(file, "patches.json")) continue;
 
         auto j = encoders::json::FromString(Files::Read(file), file);
-        if(!j.IsObject()) {
+        if (!j.IsObject()) {
             PatchesError(string_format("'%s' needs to contain an object.\n", file.c_str()));
             continue;
         }
 
-        for(auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
+        for (auto it = j.MemberBegin(); it != j.MemberEnd(); ++it) {
             std::string name = it->name.GetString();
 
-            if(patches.find(name) != patches.end()) {
+            if (patches.find(name) != patches.end()) {
                 PatchesError(string_format("The patch for '%s' has been already loaded.", name.c_str()));
                 continue;
             }
@@ -251,8 +252,8 @@ void GameData::LoadPatches(std::string game_folder)
                 continue;
             }
 
-            patches.insert({name, std::string(it->value[WIN_LINUX("windows", "linux")].GetString())});
-            patches_signatures.insert({name, signature});
+            patches.insert({ name, std::string(it->value[WIN_LINUX("windows", "linux")].GetString()) });
+            patches_signatures.insert({ name, signature });
         }
     }
 
@@ -267,7 +268,7 @@ void GameData::PerformPatch(std::string patch_name)
         return;
     }
 
-    if(patches.at(patch_name) == "") return;
+    if (patches.at(patch_name) == "") return;
 
     void* patchAddress = FetchRawSignature(patches_signatures[patch_name]);
 
@@ -296,4 +297,19 @@ void GameData::PerformPatches()
 
         PLUGIN_PRINTF("Patch", "Patches performed: %02d.\n", patchesPerformed);
     }
+}
+
+EXT_API int swiftly_GetOffset(const char* name)
+{
+    return g_GameData.GetOffset(name);
+}
+
+EXT_API void* swiftly_GetSignature(const char* name)
+{
+    return g_GameData.FetchRawSignature(name);
+}
+
+EXT_API void* swiftly_AccessVTable(const char* module, const char* vTableName)
+{
+    return DetermineModuleByLibrary(module).GetVirtualTableByName(vTableName).RCast<void*>();
 }
