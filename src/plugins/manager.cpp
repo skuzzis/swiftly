@@ -3,6 +3,7 @@
 #include <utils/utils.h>
 #include <filesystem/files/files.h>
 #include <extensions/manager.h>
+#include <server/menus/MenuManager.h>
 
 bool alreadyStarted = false;
 
@@ -173,7 +174,7 @@ void PluginsManager::StopPlugin(std::string plugin_name, bool destroyStates)
         plugin->DestroyScriptingEnvironment();
         plugin->SetPluginState(PluginState_t::Stopped);
     }
-    // g_MenuManager->UnregisterPluginMenus(plugin_name);
+    g_MenuManager.UnregisterPluginMenus(plugin_name);
 }
 
 PluginObject* PluginsManager::FetchPlugin(std::string name)

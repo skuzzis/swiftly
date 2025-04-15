@@ -9,6 +9,7 @@
 #include <sdk/game.h>
 #include <utils/utils.h>
 #include <sdk/components/CSingleRecipientFilter.h>
+#include <server/configuration/configuration.h>
 #include <engine/vgui/vgui.h>
 
 #include "usermessages.pb.h"
@@ -39,6 +40,73 @@ std::map<std::string, std::string> colors = {
     {"{LIGHTRED}", "\x0F"},
     {"{GOLD}", "\x10"},
     {"{ORANGE}", "\x10"},
+};
+
+const std::vector<std::string> key_buttons = {
+    "mouse1",
+    "space",
+    "ctrl",
+    "w",
+    "s",
+    "e",
+    "esc",
+    "a",
+    "d",
+    "a",
+    "d",
+    "mouse2",
+    "unknown_key_run",
+    "r",
+    "alt",
+    "alt",
+    "shift",
+    "unknown_key_speed",
+    "shift",
+    "unknown_key_hudzoom",
+    "unknown_key_weapon1",
+    "unknown_key_weapon2",
+    "unknown_key_bullrush",
+    "unknown_key_grenade1",
+    "unknown_key_grenade2",
+    "unknown_key_lookspin",
+    "unknown_key_26",
+    "unknown_key_27",
+    "unknown_key_28",
+    "unknown_key_29",
+    "unknown_key_30",
+    "unknown_key_31",
+    "unknown_key_32",
+    "tab",
+    "unknown_key_34",
+    "f",
+    "unknown_key_36",
+    "unknown_key_37",
+    "unknown_key_38",
+    "unknown_key_39",
+    "unknown_key_40",
+    "unknown_key_41",
+    "unknown_key_42",
+    "unknown_key_43",
+    "unknown_key_44",
+    "unknown_key_45",
+    "unknown_key_46",
+    "unknown_key_47",
+    "unknown_key_48",
+    "unknown_key_49",
+    "unknown_key_50",
+    "unknown_key_51",
+    "unknown_key_52",
+    "unknown_key_53",
+    "unknown_key_54",
+    "unknown_key_55",
+    "unknown_key_56",
+    "unknown_key_57",
+    "unknown_key_58",
+    "unknown_key_59",
+    "unknown_key_60",
+    "unknown_key_61",
+    "unknown_key_62",
+    "unknown_key_63",
 };
 
 std::string ProcessColor(std::string str, int team = CS_TEAM_CT)
@@ -73,6 +141,8 @@ Player::Player(bool m_isFakeClient, int m_slot, const char* m_name, uint64_t m_x
     SetInternalVar("tagcolor", std::string("{default}"));
     SetInternalVar("namecolor", std::string("{teamcolor}"));
     SetInternalVar("chatcolor", std::string("{default}"));
+
+    menu_renderer = new MenuRenderer(this);
 }
 
 Player::~Player()
@@ -81,6 +151,7 @@ Player::~Player()
     g_gameEventManager->FreeEvent(centerMessageEvent);
 
     if (playerObject) delete playerObject;
+    if (menu_renderer) delete menu_renderer;
 }
 
 bool Player::IsFakeClient()
@@ -243,7 +314,10 @@ void Player::SendMsg(int dest, const char* msg, ...)
 
 void Player::Think()
 {
-    if (centerMessageEndTime != 0) {
+    if (menu_renderer->ShouldRenderEachTick()) {
+        menu_renderer->RenderMenuTick();
+    }
+    else if (centerMessageEndTime != 0) {
         if (centerMessageEndTime >= GetTime()) {
             if (centerMessageEvent && playerListener) {
                 playerListener->FireGameEvent(centerMessageEvent);
@@ -254,10 +328,35 @@ void Player::Think()
         }
     }
 
+    auto movementServices = schema::GetProp<void*>(GetPawn(), "CBasePlayerPawn", "m_pMovementServices");
+    if (movementServices) {
+        void* buttons = schema::GetProp<void*>(movementServices, "CPlayer_MovementServices", "m_nButtons");
+        if (buttons) {
+            uint64_t* states = schema::GetPropPtr<uint64_t>(buttons, "CInButtonState", "m_pButtonStates");
+            SetButtons(states[0]);
+        }
+    }
+
     auto observerServices = schema::GetProp<void*>(GetPawn(), "CBasePlayerPawn", "m_pObserverServices");
     if (observerServices) {
         CHandle<CEntityInstance> observerTarget = schema::GetProp<CHandle<CEntityInstance>>(observerServices, "CPlayer_ObserverServices", "m_hObserverTarget");
         g_VGUI.CheckRenderForPlayer(slot, this, observerTarget);
+    }
+}
+
+void Player::SetButtons(uint64_t button)
+{
+    if (buttons != button) {
+        for (int i = 0; i < 64; i++) {
+            if ((buttons & (1ULL << i)) != 0 && (button & (1ULL << i)) == 0) {
+                if (g_Config.FetchValue<std::string>("core.menu.inputMode") != "chat")
+                    menu_renderer->PerformMenuAction(key_buttons[i]);
+            }
+            else if ((buttons & (1ULL << i)) == 0 && (button & (1ULL << i)) != 0) {
+
+            }
+        }
+        buttons = button;
     }
 }
 

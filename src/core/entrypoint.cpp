@@ -21,6 +21,7 @@
 #include <server/translations/translations.h>
 #include <server/player/manager.h>
 #include <server/commands/manager.h>
+#include <server/menus/MenuManager.h>
 
 #include <filesystem/logs/logger.h>
 
@@ -107,6 +108,7 @@ ResourceMonitor g_ResourceMonitor;
 ExtensionManager extManager;
 ChatProcessor g_chatProcessor;
 VoiceManager g_voiceManager;
+MenuManager g_MenuManager;
 
 std::map<std::string, std::string> gameEventsRegister;
 

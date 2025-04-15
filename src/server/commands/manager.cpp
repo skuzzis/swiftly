@@ -5,6 +5,7 @@
 
 #include <utils/utils.h>
 #include <utils/common.h>
+#include <public/tier1/strtools.h>
 
 static void commandsCallback(const CCommandContext& context, const CCommand& args);
 std::map<std::string, ConCommand*> conCommandCreated;
@@ -83,12 +84,12 @@ int CommandsManager::HandleCommand(int playerid, std::string text)
     bool isSilentCommand = false;
     std::string selectedPrefix = "";
 
-    if(commandPrefixes.size() > 0) {
-        for(auto it = commandPrefixes.begin(); it != commandPrefixes.end(); ++it) {
+    if (commandPrefixes.size() > 0) {
+        for (auto it = commandPrefixes.begin(); it != commandPrefixes.end(); ++it) {
             std::string prefix = *it;
             auto strPrefix = text.substr(0, prefix.size());
 
-            if(prefix == strPrefix) {
+            if (prefix == strPrefix) {
                 isCommand = true;
                 selectedPrefix = prefix;
                 break;
@@ -96,12 +97,12 @@ int CommandsManager::HandleCommand(int playerid, std::string text)
         }
     }
 
-    if(!isCommand && silentCommandPrefixes.size() > 0) {
-        for(auto it = silentCommandPrefixes.begin(); it != silentCommandPrefixes.end(); ++it) {
+    if (!isCommand && silentCommandPrefixes.size() > 0) {
+        for (auto it = silentCommandPrefixes.begin(); it != silentCommandPrefixes.end(); ++it) {
             std::string prefix = *it;
             auto strPrefix = text.substr(0, prefix.size());
-    
-            if(prefix == strPrefix) {
+
+            if (prefix == strPrefix) {
                 isSilentCommand = true;
                 selectedPrefix = prefix;
                 break;
@@ -126,20 +127,20 @@ int CommandsManager::HandleCommand(int playerid, std::string text)
 
         commandName.erase(0, selectedPrefix.size());
 
-        // if(player->menu_renderer->HasMenuShown() && g_Config->FetchValue<std::string>("core.menu.inputMode") == "chat") {
-        //     if( commandName == "1" || commandName == "2" || commandName == "3" || commandName == "4" || 
-        //         commandName == "5" || commandName == "6" || commandName == "7" || commandName == "8" || commandName == "9") {
-        //             int value = V_StringToUint32(commandName.c_str(), 1);
-        //             if(value > player->menu_renderer->GetMenu()->GetItemsOnPage(player->menu_renderer->GetPage())) return 2;
-    
-        //             while(player->menu_renderer->GetSelection() != value-1) {
-        //                 player->menu_renderer->MoveSelection();
-        //             }
-    
-        //             player->menu_renderer->PerformMenuAction(g_Config->FetchValue<std::string>("core.menu.buttons.use"));
-        //             return 2;
-        //         }
-        // }
+        if (player->menu_renderer->HasMenuShown() && g_Config.FetchValue<std::string>("core.menu.inputMode") == "chat") {
+            if (commandName == "1" || commandName == "2" || commandName == "3" || commandName == "4" ||
+                commandName == "5" || commandName == "6" || commandName == "7" || commandName == "8" || commandName == "9") {
+                int value = V_StringToUint32(commandName.c_str(), 1);
+                if (value > player->menu_renderer->GetMenu()->GetItemsOnPage(player->menu_renderer->GetPage())) return 2;
+
+                while (player->menu_renderer->GetSelection() != value - 1) {
+                    player->menu_renderer->MoveSelection();
+                }
+
+                player->menu_renderer->PerformMenuAction(g_Config.FetchValue<std::string>("core.menu.buttons.use"));
+                return 2;
+            }
+        }
 
         Command* cmd = FetchCommand(commandName);
         if (cmd == nullptr)
@@ -164,11 +165,11 @@ int CommandsManager::HandleCommand(int playerid, std::string text)
 
 Command* CommandsManager::FetchCommand(std::string cmd_name)
 {
-    if(commands.find(cmd_name) == commands.end()) return nullptr;
+    if (commands.find(cmd_name) == commands.end()) return nullptr;
     return commands[cmd_name];
 }
 
-void CommandsManager::RegisterCommand(std::string plugin_name, std::string cmd, Command *command, bool registerRaw)
+void CommandsManager::RegisterCommand(std::string plugin_name, std::string cmd, Command* command, bool registerRaw)
 {
     if (!registerRaw)
     {
@@ -187,7 +188,7 @@ void CommandsManager::RegisterCommand(std::string plugin_name, std::string cmd, 
     }
 
     if (conCommandCreated.find(cmd) == conCommandCreated.end())
-        conCommandCreated.insert({cmd, new ConCommand(cmd.c_str(), commandsCallback, "Swiftly Command", (1 << 25) | (1 << 0) | (1 << 24))});
+        conCommandCreated.insert({ cmd, new ConCommand(cmd.c_str(), commandsCallback, "Swiftly Command", (1 << 25) | (1 << 0) | (1 << 24)) });
 }
 
 void CommandsManager::UnregisterCommand(std::string cmd)
@@ -211,11 +212,11 @@ void CommandsManager::UnregisterCommand(std::string cmd)
     if (cmdIterator != commandsByPlugin[plugin].end())
         commandsByPlugin[plugin].erase(cmdIterator);
 
-    if(conCommandCreated.find(cmd) != conCommandCreated.end()) {
+    if (conCommandCreated.find(cmd) != conCommandCreated.end()) {
         delete conCommandCreated.at(cmd);
         conCommandCreated.erase(cmd);
     }
-    if(conCommandCreated.find("sw_" + cmd) != conCommandCreated.end()) {
+    if (conCommandCreated.find("sw_" + cmd) != conCommandCreated.end()) {
         delete conCommandCreated.at("sw_" + cmd);
         conCommandCreated.erase("sw_" + cmd);
     }
@@ -228,7 +229,7 @@ std::vector<std::string> CommandsManager::FetchCommandsByPlugin(std::string plug
     return commandsByPlugin.at(plugin_name);
 }
 
-std::map<std::string, Command *> CommandsManager::GetCommands()
+std::map<std::string, Command*> CommandsManager::GetCommands()
 {
     return commands;
 }
@@ -252,8 +253,8 @@ static void commandsCallback(const CCommandContext& context, const CCommand& arg
 }
 
 std::string GenerateCommandDefaultPrefix() {
-    if(commandPrefixes.size() == 0 && silentCommandPrefixes.size() == 0) return "sw_";
+    if (commandPrefixes.size() == 0 && silentCommandPrefixes.size() == 0) return "sw_";
 
-    if(commandPrefixes.size() == 0) return (*silentCommandPrefixes.begin());
+    if (commandPrefixes.size() == 0) return (*silentCommandPrefixes.begin());
     else return (*commandPrefixes.begin());
 }

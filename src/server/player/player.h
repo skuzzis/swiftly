@@ -10,6 +10,7 @@
 #include <public/playerslot.h>
 #include <public/mathlib/vector.h>
 #include <public/igameevents.h>
+#include <server/menus/MenuRenderer.h>
 #include <ctime>
 
 class Player
@@ -38,7 +39,11 @@ private:
     uint64_t centerMessageEndTime = 0;
     std::string centerMessageText;
 
+    uint64_t buttons;
+
 public:
+    MenuRenderer* menu_renderer = nullptr;
+
     Player(bool m_isFakeClient, int m_slot, const char* m_name, uint64_t m_xuid, std::string ip_address);
     ~Player();
 
@@ -82,6 +87,8 @@ public:
     ClassData* GetPlayerObject();
 
     void Think();
+
+    void SetButtons(uint64_t button);
 
     CPlayerBitVec m_selfMutes[64] = {};
 };

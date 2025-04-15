@@ -111,6 +111,7 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/scripting/server/commands.cpp',
     'src/scripting/server/configuration.cpp',
+    'src/scripting/server/menus.cpp',
     'src/scripting/server/translations.cpp',
     'src/scripting/server/utils.cpp',
 
@@ -127,6 +128,11 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/server/commands/manager.cpp',
 
     'src/server/configuration/configuration.cpp',
+
+    'src/server/menus/kinds/CenterMenu.cpp',
+    'src/server/menus/kinds/ScreenMenu.cpp',
+    'src/server/menus/MenuManager.cpp',
+    'src/server/menus/MenuRenderer.cpp',
 
     'src/server/player/manager.cpp',
     'src/server/player/player.cpp',
