@@ -96,6 +96,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/scripting/entities/weapons.cpp',
 
     'src/scripting/memory/memory.cpp',
+    'src/scripting/memory/hooks.cpp',
     'src/scripting/memory/keyvalues/centitykeyvalues.cpp',
 
     'src/scripting/network/database.cpp',
@@ -175,6 +176,7 @@ for sdk_target in MMSPlugin.sdk_targets:
       os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'linuxsteamrt64', 'lib', 'libasmtk.a'),
       os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'linuxsteamrt64', 'lib', 'libdynohook.a'),
       os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'linuxsteamrt64', 'lib', 'libZydis.a'),
+      os.path.join(builder.sourcePath, 'vendor', 'dyncall', 'linuxsteamrt64', 'lib', 'libdyncall_s.a'),
 
       "-lgnutls",
 			"-lz",
@@ -233,6 +235,7 @@ for sdk_target in MMSPlugin.sdk_targets:
       os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'win64', 'lib', 'asmjit.lib'),
       os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'win64', 'lib', 'dynohook.lib'),
       os.path.join(builder.sourcePath, 'vendor', 'dynohook', 'win64', 'lib', 'Zydis.lib'),
+      os.path.join(builder.sourcePath, 'vendor', 'dyncall', 'win64', 'lib', 'dyncall_s.lib'),
 
       "psapi.lib",
       "winmm.lib",
@@ -299,6 +302,7 @@ for sdk_target in MMSPlugin.sdk_targets:
     os.path.join(builder.sourcePath, 'vendor', 'bzip2', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include'),
     os.path.join(builder.sourcePath, 'vendor', 'dynohook', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include'),
     os.path.join(builder.sourcePath, 'vendor', 'dynohook', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include', 'dynohook'),
+    os.path.join(builder.sourcePath, 'vendor', 'dyncall', ('win64' if binary.compiler.target.platform == 'windows' else 'linuxsteamrt64'), 'include'),
     
     os.path.join(builder.sourcePath, 'src'),
 

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <any>
 
 #include <dynohook/core.h>
 #include <dynohook/os.h>
@@ -42,6 +43,14 @@ public:
     void Initialize();
     void Enable();
     void Disable();
+
+    std::any Call(std::vector<std::any> arguments);
+
+    template <typename... Args>
+    auto operator()(Args &&...args)
+    {
+        return std::invoke(m_pfn, std::forward<Args>(args)...);
+    }
 };
 
 #endif

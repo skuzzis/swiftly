@@ -63,8 +63,8 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
         if (context->GetArgumentOr<std::string>(0, "").c_str() == "") return;
         std::string event_name = context->GetArgument<std::string>(0);
 
-        for(auto it = gameEventsRegister.begin(); it != gameEventsRegister.end(); ++it) {
-            if(it->second == event_name) {
+        for (auto it = gameEventsRegister.begin(); it != gameEventsRegister.end(); ++it) {
+            if (it->second == event_name) {
                 auto gameEvent = g_gameEventManager->CreateEvent(it->first.c_str());
                 data->SetData("event_data", gameEvent);
                 data->SetData("should_free", true);
@@ -74,7 +74,7 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
     });
 
     ADD_CLASS_FUNCTION("Event", "~Event", [](FunctionContext* context, ClassData* data) -> void {
-        if(data->GetDataOr<bool>("should_free", false) && data->GetDataOr<IGameEvent*>("event_data", nullptr)) {
+        if (data->GetDataOr<bool>("should_free", false) && data->GetDataOr<IGameEvent*>("event_data", nullptr)) {
             g_gameEventManager->FreeEvent(data->GetData<IGameEvent*>("event_data"));
         }
     });
@@ -88,32 +88,32 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
     });
 
     ADD_CLASS_FUNCTION("Event", "SetBool", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data")) return;
+        if (!data->HasData("event_data")) return;
         data->GetData<IGameEvent*>("event_data")->SetBool(context->GetArgumentOr<std::string>(0, "").c_str(), context->GetArgumentOr<bool>(1, false));
     });
 
     ADD_CLASS_FUNCTION("Event", "SetInt", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data")) return;
+        if (!data->HasData("event_data")) return;
         data->GetData<IGameEvent*>("event_data")->SetInt(context->GetArgumentOr<std::string>(0, "").c_str(), context->GetArgumentOr<int>(1, 0));
     });
 
     ADD_CLASS_FUNCTION("Event", "SetUint64", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data")) return;
+        if (!data->HasData("event_data")) return;
         data->GetData<IGameEvent*>("event_data")->SetUint64(context->GetArgumentOr<std::string>(0, "").c_str(), context->GetArgumentOr<uint64_t>(1, 0));
     });
 
     ADD_CLASS_FUNCTION("Event", "SetFloat", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data")) return;
+        if (!data->HasData("event_data")) return;
         data->GetData<IGameEvent*>("event_data")->SetFloat(context->GetArgumentOr<std::string>(0, "").c_str(), context->GetArgumentOr<float>(1, 0.0f));
     });
 
     ADD_CLASS_FUNCTION("Event", "SetString", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data")) return;
+        if (!data->HasData("event_data")) return;
         data->GetData<IGameEvent*>("event_data")->SetString(context->GetArgumentOr<std::string>(0, "").c_str(), context->GetArgumentOr<std::string>(1, "").c_str());
     });
 
     ADD_CLASS_FUNCTION("Event", "GetBool", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
+        if (!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
             context->SetReturn(false);
             return;
         }
@@ -121,7 +121,7 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
     });
 
     ADD_CLASS_FUNCTION("Event", "GetInt", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
+        if (!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
             context->SetReturn(0);
             return;
         }
@@ -129,7 +129,7 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
     });
 
     ADD_CLASS_FUNCTION("Event", "GetUint64", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
+        if (!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
             context->SetReturn(0);
             return;
         }
@@ -137,7 +137,7 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
     });
 
     ADD_CLASS_FUNCTION("Event", "GetFloat", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
+        if (!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
             context->SetReturn(0.0f);
             return;
         }
@@ -145,7 +145,7 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
     });
 
     ADD_CLASS_FUNCTION("Event", "GetString", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
+        if (!data->HasData("event_data") || !data->GetData<IGameEvent*>("event_data")->HasKey(context->GetArgumentOr<std::string>(0, "").c_str())) {
             context->SetReturn("");
             return;
         }
@@ -153,31 +153,31 @@ LoadScriptingComponent(events, [](PluginObject plugin, EContext* ctx) -> void {
     });
 
     ADD_CLASS_FUNCTION("Event", "FireEvent", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data")) return;
+        if (!data->HasData("event_data")) return;
 
         g_gameEventManager->FireEvent(data->GetData<IGameEvent*>("event_data"), context->GetArgumentOr<bool>(0, false));
     });
 
     ADD_CLASS_FUNCTION("Event", "FireEventToClient", [](FunctionContext* context, ClassData* data) -> void {
-        if(!data->HasData("event_data")) return;
+        if (!data->HasData("event_data")) return;
 
         int slot = context->GetArgumentOr<int>(0, -1);
-        if(slot < 0 || slot >= GetMaxGameClients()) return;
+        if (slot < 0 || slot >= GetMaxGameClients()) return;
 
         IGameEventListener2* playerListener = g_GameData.FetchSignature<GetLegacyGameEventListener>("LegacyGameEventListener")(slot);
         playerListener->FireGameEvent(data->GetData<IGameEvent*>("event_data"));
     });
 
     ADD_CLASS_FUNCTION("Event", "SetReturn", [](FunctionContext* context, ClassData* data) -> void {
-        if(context->GetArgumentsCount() < 1) return;
+        if (context->GetArgumentsCount() < 1) return;
 
         data->SetData("event_return", context->GetArgument<std::any>(0));
     });
 
     ADD_CLASS_FUNCTION("Event", "GetReturn", [](FunctionContext* context, ClassData* data) -> void {
-        if(data->HasData("event_return")) context->SetReturn(data->GetData<std::any>("event_return"));
+        if (data->HasData("event_return")) context->SetReturn(data->GetData<std::any>("event_return"));
     });
-    
+
     ADD_CLASS_FUNCTION("Event", "SetNoBroadcast", [](FunctionContext* context, ClassData* data) -> void {
         data->SetData("dontBroadcast", context->GetArgumentOr<bool>(0, false));
     });

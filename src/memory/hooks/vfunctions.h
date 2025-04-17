@@ -3,11 +3,14 @@
 
 #include <string>
 #include <vector>
+#include <any>
 
 #include <dynohook/core.h>
 #include <dynohook/os.h>
 #include <dynohook/ihook.h>
 #include <dynohook/imanager.h>
+
+#include <memory/virtual/virtual.h>
 
 #if DYNO_PLATFORM_WINDOWS
 #include <dynohook/conventions/x64_windows_call.h>
@@ -43,6 +46,14 @@ public:
     void Initialize();
     void Enable();
     void Disable();
+
+    std::any Call(std::vector<std::any> arguments);
+
+    template <typename... Args>
+    auto operator()(Args &&...args)
+    {
+        return std::invoke(m_pvtable[m_ioffset], std::forward<Args>(args)...);
+    }
 };
 
 #endif

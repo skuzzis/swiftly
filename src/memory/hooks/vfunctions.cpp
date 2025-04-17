@@ -2,6 +2,12 @@
 
 #include <memory/gamedata/gamedata.h>
 #include <dynlibutils/module.h>
+#include <utils/common.h>
+#include <embedder/src/embedder.h>
+
+#include <dyncall/dyncall.h>
+
+DCCallVM* vfunctionCallVM = dcNewCallVM(4096);
 
 DynLibUtils::CModule DetermineModuleByLibrary(std::string library);
 
@@ -61,4 +67,81 @@ void VFunctionHook::Disable()
 
     enabled = false;
     hookFunc->removeCallback(m_callbackType, m_handler);
+}
+
+std::any VFunctionHook::Call(std::vector<std::any> arguments)
+{
+    if (!m_pvtable) return nullptr;
+
+    void* m_pfn = reinterpret_cast<void**>(m_pvtable)[m_ioffset];
+
+    dcReset(vfunctionCallVM);
+    dcMode(vfunctionCallVM, DC_CALL_C_DEFAULT);
+
+    for (int i = 0; i < arguments.size(); i++) {
+        if (m_function_args.size() <= i)
+            break;
+
+        if (m_function_args.at(i) == 'p') {
+            if (arguments[i].type() == typeid(std::string)) {
+                dcArgPointer(vfunctionCallVM, (void*)strtol(std::any_cast<std::string>(arguments[i]).c_str(), nullptr, 16));
+            }
+            else if (arguments[i].type() == typeid(ClassData*)) {
+                dcArgPointer(vfunctionCallVM, std::any_cast<ClassData*>(arguments[i])->GetDataOr<void*>("ptr", nullptr));
+            }
+        }
+        else if (m_function_args.at(i) == 'f')
+            dcArgFloat(vfunctionCallVM, std::any_cast<float>(arguments[i]));
+        else if (m_function_args.at(i) == 'b')
+            dcArgBool(vfunctionCallVM, std::any_cast<bool>(arguments[i]));
+        else if (m_function_args.at(i) == 'd')
+            dcArgDouble(vfunctionCallVM, std::any_cast<double>(arguments[i]));
+        else if (m_function_args.at(i) == 'i')
+            dcArgInt(vfunctionCallVM, std::any_cast<int>(arguments[i]));
+        else if (m_function_args.at(i) == 'u')
+            dcArgLong(vfunctionCallVM, std::any_cast<uint32_t>(arguments[i]));
+        else if (m_function_args.at(i) == 's')
+            dcArgPointer(vfunctionCallVM, (void*)std::any_cast<std::string>(arguments[i]).c_str());
+        else if (m_function_args.at(i) == 'I')
+            dcArgLongLong(vfunctionCallVM, std::any_cast<int64_t>(arguments[i]));
+        else if (m_function_args.at(i) == 'U')
+            dcArgLongLong(vfunctionCallVM, std::any_cast<uint64_t>(arguments[i]));
+        else
+        {
+            PRINTF("Invalid Data Type: '%c'.\n", m_function_args.at(i));
+            break;
+        }
+
+        std::any retval = nullptr;
+        if (m_function_return == 'p')
+            retval = new ClassData({ { "ptr", (void*)dcCallPointer(vfunctionCallVM, m_pfn) }, { "should_mark_freeable", true } }, "Memory", nullptr);
+        else if (m_function_return == 'f')
+            retval = (float)dcCallFloat(vfunctionCallVM, m_pfn);
+        else if (m_function_return == 'b')
+            retval = (bool)dcCallBool(vfunctionCallVM, m_pfn);
+        else if (m_function_return == 'd')
+            retval = (double)dcCallDouble(vfunctionCallVM, m_pfn);
+        else if (m_function_return == 'i')
+            retval = (int)dcCallInt(vfunctionCallVM, m_pfn);
+        else if (m_function_return == 'u')
+            retval = (uint32_t)dcCallInt(vfunctionCallVM, m_pfn);
+        else if (m_function_return == 's')
+            retval = std::string((const char*)dcCallPointer(vfunctionCallVM, m_pfn));
+        else if (m_function_return == 'I')
+            retval = (int64_t)dcCallLongLong(vfunctionCallVM, m_pfn);
+        else if (m_function_return == 'U')
+            retval = (uint64_t)dcCallLongLong(vfunctionCallVM, m_pfn);
+        else if (m_function_return == 'v')
+        {
+            dcCallVoid(vfunctionCallVM, m_pfn);
+            retval = nullptr;
+        }
+        else
+        {
+            PRINTF("Invalid return type: '%c'.\n", m_function_return);
+            retval = nullptr;
+        }
+
+        return retval;
+    }
 }
