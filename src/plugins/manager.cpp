@@ -200,10 +200,9 @@ std::string PluginsManager::GetPluginBasePath(std::string plugin_name)
 
 EXT_API int swiftly_TriggerEvent(const char* ext_name, const char* evName, void* args, void* eventReturn)
 {
-    ClassData* data = new ClassData({ { "plugin_name", std::string(ext_name) } }, "Event", nullptr);
-    auto result = g_pluginManager.ExecuteEvent(ext_name, evName, *(std::vector<std::any>*)args, data);
-    *reinterpret_cast<std::any*>(eventReturn) = data->GetData<std::any>("event_return");
-    delete data;
+    ClassData data({ { "plugin_name", std::string(ext_name) } }, "Event", nullptr);
+    auto result = g_pluginManager.ExecuteEvent(ext_name, evName, *(std::vector<std::any>*)args, &data);
+    *reinterpret_cast<std::any*>(eventReturn) = data.GetData<std::any>("event_return");
 
     return (int)result;
 }

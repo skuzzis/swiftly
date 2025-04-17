@@ -31,6 +31,8 @@
 #include <memory/gamedata/gamedata.h>
 #include <memory/hooks/manager.h>
 
+#include <network/usermessages/usermessages.h>
+
 #include <extensions/manager.h>
 #include <server/chat/chat.h>
 #include <engine/voicemanager/manager.h>
@@ -117,6 +119,7 @@ VoiceManager g_voiceManager;
 MenuManager g_MenuManager;
 DatabaseManager g_dbManager;
 HookManager g_hookManager;
+UserMessages g_ums;
 
 std::map<std::string, std::string> gameEventsRegister;
 
@@ -152,6 +155,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
     SH_ADD_HOOK_MEMFUNC(IServerGameDLL, GameFrame, server, this, &SwiftlyS2::GameFrame, true);
+    SH_ADD_HOOK_MEMFUNC(IServerGameClients, ClientCommand, gameclients, this, &SwiftlyS2::Hook_OnClientCommand, false);
 
     HandleConfigExamples();
 
@@ -169,6 +173,7 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     g_GameData.LoadGameData();
     g_GameData.PerformPatches();
 
+    g_ums.Initialize();
     g_convarQuery.Initialize();
     g_eventManager.Initialize();
     g_entSystem.Initialize();
@@ -207,6 +212,7 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
     g_pluginManager.UnloadPlugins();
 
     extManager.UnloadExtensions();
+    g_ums.Destroy();
     g_convarQuery.Shutdown();
     g_eventManager.Shutdown();
     g_entSystem.Shutdown();
@@ -220,9 +226,36 @@ bool SwiftlyS2::Unload(char* error, size_t maxlen)
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIActivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIActivated, false);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameServerSteamAPIDeactivated, server, this, &SwiftlyS2::Hook_GameServerSteamAPIDeactivated, false);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameDLL, GameFrame, server, this, &SwiftlyS2::GameFrame, true);
+    SH_REMOVE_HOOK_MEMFUNC(IServerGameClients, ClientCommand, gameclients, this, &SwiftlyS2::Hook_OnClientCommand, false);
 
     EndCrashListener();
     return true;
+}
+
+bool OnClientCommand(int playerid, std::string command)
+{
+    ClassData data({ { "plugin_name", "core" } }, "Event", nullptr);
+    g_pluginManager.ExecuteEvent("core", "OnClientCommand", { playerid, command }, &data);
+
+    bool response = true;
+    try
+    {
+        response = std::any_cast<bool>(data.GetData<std::any>("event_return"));
+    }
+    catch (std::bad_any_cast e)
+    {
+        response = true;
+    }
+
+    return response;
+}
+
+void SwiftlyS2::Hook_OnClientCommand(CPlayerSlot slot, const CCommand& cmd)
+{
+    if (!OnClientCommand(slot.Get(), cmd.GetCommandString()))
+        RETURN_META(MRES_SUPERCEDE);
+
+    RETURN_META(MRES_IGNORED);
 }
 
 void SwiftlyS2::RegisterTimeout(int64_t delay, std::function<void()> callback)
@@ -236,14 +269,20 @@ void SwiftlyS2::AllPluginsLoaded()
 
 }
 
+std::string currentMap = "None";
+
 void SwiftlyS2::OnLevelInit(char const* pMapName, char const* pMapEntities, char const* pOldLevel, char const* pLandmarkName, bool loadGame, bool background)
 {
-
+    currentMap = pMapName;
+    g_pluginManager.ExecuteEvent("core", "OnMapLoad", { currentMap }, nullptr);
 }
 
 void SwiftlyS2::OnLevelShutdown()
 {
+    g_translations.LoadTranslations();
+    g_Config.LoadPluginConfigurations();
 
+    g_pluginManager.ExecuteEvent("core", "OnMapUnload", { currentMap }, nullptr);
 }
 
 std::list<std::list<std::pair<int64_t, std::function<void()>>>::iterator> queueRemoveTimeouts;
@@ -265,6 +304,8 @@ void UpdatePlayers()
         }
     }
 }
+
+ClassData* gfData = new ClassData({ { "plugin_name", "" } }, "Event", nullptr);
 
 void SwiftlyS2::GameFrame(bool simulate, bool first, bool last)
 {
@@ -293,6 +334,8 @@ void SwiftlyS2::GameFrame(bool simulate, bool first, bool last)
 
         g_flNextUpdate = curtime + 5.0;
     }
+
+    g_pluginManager.ExecuteEvent("core", "OnGameTick", { simulate, first, last }, gfData);
 }
 
 void SwiftlyS2::Hook_GameServerSteamAPIActivated()

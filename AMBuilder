@@ -81,6 +81,7 @@ for sdk_target in MMSPlugin.sdk_targets:
 
     'src/network/database/DatabaseManager.cpp',
     'src/network/usermessages/usermessage.cpp',
+    'src/network/usermessages/usermessages.cpp',
 
     'src/plugins/manager.cpp',
     'src/plugins/object.cpp',

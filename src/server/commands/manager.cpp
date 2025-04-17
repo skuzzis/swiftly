@@ -25,12 +25,17 @@ void CommandsManager::Shutdown()
     SH_REMOVE_HOOK_MEMFUNC(ICvar, DispatchConCommand, g_pCVar, this, &CommandsManager::DispatchConCommand, false);
 }
 
+bool OnClientCommand(int playerid, std::string command);
+bool OnClientChat(int playerid, std::string text, bool teamonly);
+
 void CommandsManager::DispatchConCommand(ConCommandRef cmd, const CCommandContext& ctx, const CCommand& args)
 {
     CPlayerSlot slot = ctx.GetPlayerSlot();
 
     if (slot.Get() != -1)
     {
+        if (!OnClientCommand(slot.Get(), args.GetCommandString())) RETURN_META(MRES_SUPERCEDE);
+
         std::string command = args.Arg(0);
         if (command == "say" || command == "say_team")
         {
@@ -59,7 +64,7 @@ void CommandsManager::DispatchConCommand(ConCommandRef cmd, const CCommandContex
             }
 
             int handleCommandReturn = HandleCommand(slot.Get(), text);
-            if (handleCommandReturn == 2) RETURN_META(MRES_SUPERCEDE);
+            if (handleCommandReturn == 2 || !OnClientChat(slot.Get(), text, teamonly)) RETURN_META(MRES_SUPERCEDE);
         }
     }
 }

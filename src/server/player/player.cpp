@@ -11,6 +11,7 @@
 #include <sdk/components/CSingleRecipientFilter.h>
 #include <server/configuration/configuration.h>
 #include <engine/vgui/vgui.h>
+#include <plugins/manager.h>
 
 #include "usermessages.pb.h"
 
@@ -351,9 +352,11 @@ void Player::SetButtons(uint64_t button)
             if ((buttons & (1ULL << i)) != 0 && (button & (1ULL << i)) == 0) {
                 if (g_Config.FetchValue<std::string>("core.menu.inputMode") != "chat")
                     menu_renderer->PerformMenuAction(key_buttons[i]);
+
+                g_pluginManager.ExecuteEvent("core", "OnClientKeyStateChange", { slot, key_buttons[i], true }, {});
             }
             else if ((buttons & (1ULL << i)) == 0 && (button & (1ULL << i)) != 0) {
-
+                g_pluginManager.ExecuteEvent("core", "OnClientKeyStateChange", { slot, key_buttons[i], false }, {});
             }
         }
         buttons = button;

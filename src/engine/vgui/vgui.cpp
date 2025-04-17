@@ -11,12 +11,13 @@
 #include <core/entrypoint.h>
 #include <sdk/components/EntityCheckTransmit.h>
 #include <server/player/manager.h>
+#include <plugins/manager.h>
 
 SH_DECL_EXTERN7_void(ISource2GameEntities, CheckTransmit, SH_NOATTRIB, 0, CCheckTransmitInfo**, int, CBitVec<16384>&, const Entity2Networkable_t**, const uint16_t*, int, bool);
 
 VGUI::~VGUI()
 {
-    for(auto it = screenTexts.begin(); it != screenTexts.end(); ++it) 
+    for (auto it = screenTexts.begin(); it != screenTexts.end(); ++it)
         delete it->second;
 }
 
@@ -24,21 +25,21 @@ uint64_t VGUI::RegisterScreenText()
 {
     internalScreenTextID++;
     ScreenText* txt = new ScreenText();
-    screenTexts.insert({internalScreenTextID, txt});
-    
+    screenTexts.insert({ internalScreenTextID, txt });
+
     return internalScreenTextID;
 }
 
 ScreenText* VGUI::GetScreenText(uint64_t id)
 {
-    if(screenTexts.find(id) == screenTexts.end()) return nullptr;
+    if (screenTexts.find(id) == screenTexts.end()) return nullptr;
 
     return screenTexts[id];
 }
 
 void VGUI::DeleteScreenText(uint64_t id)
 {
-    if(screenTexts.find(id) == screenTexts.end()) return;
+    if (screenTexts.find(id) == screenTexts.end()) return;
 
     ScreenText* txt = screenTexts[id];
     delete txt;
@@ -48,18 +49,18 @@ void VGUI::DeleteScreenText(uint64_t id)
 
 void VGUI::RegenerateScreenTexts()
 {
-    for(auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
+    for (auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
         it->second->RegenerateText();
     }
 }
 
 void VGUI::FilterRenderingItems(Player* player, CCheckTransmitInfo* pInfo)
 {
-    for(auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
-        if(it->second->GetPlayer() != player) {
+    for (auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
+        if (it->second->GetPlayer() != player) {
             int entIndex = it->second->GetEntityIndex();
             pInfo->m_pTransmitEntity->Clear(entIndex);
-            if(pInfo->m_pTransmitAlways->Get(entIndex))
+            if (pInfo->m_pTransmitAlways->Get(entIndex))
                 pInfo->m_pTransmitAlways->Clear(entIndex);
         }
     }
@@ -68,24 +69,26 @@ void VGUI::FilterRenderingItems(Player* player, CCheckTransmitInfo* pInfo)
 void VGUI::CheckRenderForPlayer(int pid, Player* player, CHandle<CEntityInstance> specView)
 {
     bool shouldRegenerate = false;
-    if(((rendersToSpectator & (1ULL << pid)) != 0) && !specView) {
+    if (((rendersToSpectator & (1ULL << pid)) != 0) && !specView) {
         rendersToSpectator &= ~(1ULL << pid);
         shouldRegenerate = true;
-    } else if(((rendersToSpectator & (1ULL << pid)) == 0) && specView.IsValid()) {
+    }
+    else if (((rendersToSpectator & (1ULL << pid)) == 0) && specView.IsValid()) {
         rendersToSpectator |= (1ULL << pid);
         shouldRegenerate = true;
     }
 
-    if(shouldRegenerate) {
-        for(auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
-            if(it->second->GetPlayer() == player) {
+    if (shouldRegenerate) {
+        for (auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
+            if (it->second->GetPlayer() == player) {
                 it->second->RegenerateText(false);
                 it->second->SetRenderingTo(specView.Get());
             }
         }
-    } else {
-        for(auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
-            if(it->second->GetPlayer() == player && !it->second->IsRenderingTo(specView)) {
+    }
+    else {
+        for (auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
+            if (it->second->GetPlayer() == player && !it->second->IsRenderingTo(specView)) {
                 it->second->RegenerateText(false);
                 it->second->SetRenderingTo(specView.Get());
             }
@@ -96,14 +99,14 @@ void VGUI::CheckRenderForPlayer(int pid, Player* player, CHandle<CEntityInstance
 void VGUI::Unregister(Player* player)
 {
     std::vector<uint64_t> eraseIDs;
-    for(auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
-        if(it->second->GetPlayer() == player) {
+    for (auto it = screenTexts.begin(); it != screenTexts.end(); ++it) {
+        if (it->second->GetPlayer() == player) {
             delete it->second;
             eraseIDs.push_back(it->first);
         }
     }
 
-    for(auto id : eraseIDs)
+    for (auto id : eraseIDs)
         screenTexts.erase(id);
 }
 
@@ -117,6 +120,8 @@ void VGUI::Shutdown()
     SH_REMOVE_HOOK_MEMFUNC(ISource2GameEntities, CheckTransmit, g_pSource2GameEntities, this, &VGUI::CheckTransmit, true);
 }
 
+ClassData* checktransmitEvent = new ClassData({ {"plugin_name", "core"} }, "Event", nullptr);
+
 void VGUI::CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount, CBitVec<16384>& unionTransmitEdicts, const Entity2Networkable_t** pNetworkables, const uint16_t* pEntityIndicies, int nEntities, bool bEnablePVSBits)
 {
     if (!g_pGameEntitySystem) return;
@@ -128,6 +133,8 @@ void VGUI::CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount, CBitVec
         Player* player = g_playerManager.GetPlayer(playerid);
         if (!player) continue;
 
+        ClassData tInfo({ { "transmit_ptr", pInfo } }, "CCheckTransmitInfo", nullptr);
+        g_pluginManager.ExecuteEvent("core", "OnPlayerCheckTransmit", { playerid, &tInfo }, checktransmitEvent);
         FilterRenderingItems(player, (CCheckTransmitInfo*)pInfo);
     }
 }

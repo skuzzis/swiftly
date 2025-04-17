@@ -26,8 +26,9 @@ public:
 	void AllPluginsLoaded();
 
 	void Hook_GameServerSteamAPIActivated();
-    void Hook_GameServerSteamAPIDeactivated();
+	void Hook_GameServerSteamAPIDeactivated();
 	void GameFrame(bool simulate, bool first, bool last);
+	void Hook_OnClientCommand(CPlayerSlot slot, const CCommand& cmd);
 
 	void OnLevelInit(char const* pMapName, char const* pMapEntities, char const* pOldLevel, char const* pLandmarkName, bool loadGame, bool background);
 	void OnLevelShutdown();

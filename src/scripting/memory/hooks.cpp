@@ -72,16 +72,14 @@ dyno::ReturnAction HookCallback(dyno::CallbackType type, dyno::IHook& hook) {
     if (hooksList.find(hptr) == hooksList.end())
         return dyno::ReturnAction::Ignored;
 
-    ClassData* ev = new ClassData({ { "plugin_name", "core" }, { "hook_ptr", hptr } }, "Event", nullptr);
+    ClassData ev({ { "plugin_name", "core" }, { "hook_ptr", hptr } }, "Event", nullptr);
     for (auto hk : hooksList[hptr])
     {
-        if (g_pluginManager.ExecuteEvent("core", "hook:" + callbackType + ":" + hk.id, {}, ev) != EventResult::Continue) {
-            delete ev;
+        if (g_pluginManager.ExecuteEvent("core", "hook:" + callbackType + ":" + hk.id, {}, &ev) != EventResult::Continue) {
             return dyno::ReturnAction::Supercede;
         }
     }
 
-    delete ev;
     return dyno::ReturnAction::Ignored;
 }
 
@@ -111,33 +109,24 @@ dyno::ReturnAction Hook_FireOutputInternal(dyno::CallbackType type, dyno::IHook&
 
     if (hookIds.size() > 0)
     {
-        ClassData* ev = new ClassData({ { "plugin_name", "core" } }, "Event", nullptr);
-        ClassData* entIOOutput = new ClassData({ { "class_name", "CEntityIOOutput" }, { "class_ptr", pThis } }, "SDKClass", nullptr);
-        ClassData* Activator = new ClassData({ { "class_name", "CEntityInstance" }, { "class_ptr", pActivator } }, "SDKClass", nullptr);
-        ClassData* Caller = new ClassData({ { "class_name", "CEntityInstance" }, { "class_ptr", pCaller } }, "SDKClass", nullptr);
+        ClassData ev({ { "plugin_name", "core" } }, "Event", nullptr);
+        ClassData entIOOutput({ { "class_name", "CEntityIOOutput" }, { "class_ptr", pThis } }, "SDKClass", nullptr);
+        ClassData Activator({ { "class_name", "CEntityInstance" }, { "class_ptr", pActivator } }, "SDKClass", nullptr);
+        ClassData Caller({ { "class_name", "CEntityInstance" }, { "class_ptr", pCaller } }, "SDKClass", nullptr);
         for (auto id : hookIds)
         {
             auto result = g_pluginManager.ExecuteEvent("core", std::string("hook:") + (type == dyno::CallbackType::Pre ? "Pre" : "Post") + ":" + id, {
-                entIOOutput,
+                &entIOOutput,
                 pThis->m_pDesc->m_pName,
-                Activator,
-                Caller,
+                &Activator,
+                &Caller,
                 delay
-            }, ev);
+            }, &ev);
             if (result != EventResult::Continue)
             {
-                delete ev;
-                delete entIOOutput;
-                delete Activator;
-                delete Caller;
                 return dyno::ReturnAction::Supercede;
             }
         }
-
-        delete ev;
-        delete entIOOutput;
-        delete Activator;
-        delete Caller;
     }
 
     return dyno::ReturnAction::Ignored;

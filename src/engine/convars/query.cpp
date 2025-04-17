@@ -57,24 +57,28 @@ void CvarQuery::Initialize()
 
 void CvarQuery::Shutdown()
 {
-    if(OnConVarQueryID == -1) return;
+    if (OnConVarQueryID == -1) return;
 
     SH_REMOVE_HOOK_ID(OnConVarQueryID);
 }
 
+void OnClientConvarQuery(int playerid, std::string convar_name, std::string convar_value);
+
 bool CvarQuery::OnConvarQuery(const CNetMessagePB<CCLCMsg_RespondCvarValue>& msg)
 {
     auto client = META_IFACEPTR(CServerSideClient);
-    
+
     auto player = g_playerManager.GetPlayer(client->GetPlayerSlot());
-    if(!player) RETURN_META_VALUE(MRES_IGNORED, true);
-    if(player->IsFakeClient()) RETURN_META_VALUE(MRES_IGNORED, true);
+    if (!player) RETURN_META_VALUE(MRES_IGNORED, true);
+    if (player->IsFakeClient()) RETURN_META_VALUE(MRES_IGNORED, true);
 
     if (msg.name() == "cl_language") {
         if (languages.find(msg.value()) != languages.end()) {
             player->SetInternalVar("language", languages.at(msg.value()));
         }
     }
+
+    OnClientConvarQuery(client->GetPlayerSlot().Get(), msg.name(), msg.value());
 
     RETURN_META_VALUE(MRES_IGNORED, true);
 }
@@ -93,11 +97,11 @@ void CvarQuery::QueryCvarClient(CPlayerSlot slot, std::string cvarName)
     for the god's sake, why on windows without memoverride it automatically collects this pointer and deletes it ????
     they have some special shananigans over here
     always remember to not delete it on windows because you'll stay again 4 hrs to debug it
-    
+
     i'll use dreamberd next time to use "const const const" which will affect all users of windows globally for this
     so that they don't need to debug it like i did
     */
-    #ifndef _WIN32
+#ifndef _WIN32
     delete msg;
-    #endif
+#endif
 }

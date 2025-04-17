@@ -65,7 +65,10 @@ EventResult PluginObject::TriggerEvent(std::string invokedBy, std::string eventN
     EventResult response = EventResult::Continue;
     try
     {
-        if (!eventObject) eventObject = new ClassData({ { "plugin_name", invokedBy } }, "Event", ctx);
+        if (!eventObject) {
+            ClassData tmpObject({ { "plugin_name", invokedBy } }, "Event", ctx);
+            eventObject = &tmpObject;
+        }
         auto value = (*eventFunctionPtr)(eventObject, eventName, eventPayload);
         if (value.isNumber())
         {

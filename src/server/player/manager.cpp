@@ -7,6 +7,7 @@
 
 #include <server/configuration/configuration.h>
 #include <engine/convars/query.h>
+#include <plugins/manager.h>
 
 SH_DECL_EXTERN3_void(IServerGameDLL, GameFrame, SH_NOATTRIB, 0, bool, bool, bool);
 SH_DECL_EXTERN6(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, CPlayerSlot, const char*, uint64_t, const char*, bool, CBufferString*);
@@ -17,13 +18,13 @@ uint64_t playerMask = 0;
 
 PlayerManager::PlayerManager()
 {
-    g_Players = new Player*[GetMaxGameClients()];
+    g_Players = new Player * [GetMaxGameClients()];
 }
 
 PlayerManager::~PlayerManager()
 {
-    for(int i = 0; i < GetMaxGameClients(); i++) {
-        if(g_Players[i]) {
+    for (int i = 0; i < GetMaxGameClients(); i++) {
+        if (g_Players[i]) {
             delete g_Players[i];
         }
     }
@@ -37,18 +38,18 @@ Player* PlayerManager::GetPlayer(CPlayerSlot slot)
 
 Player* PlayerManager::GetPlayer(int slot)
 {
-    if(slot < 0 || slot > GetMaxGameClients()-1) return nullptr;
-    if((playerMask & (1ULL << slot)) == 0) return nullptr;
-    
+    if (slot < 0 || slot > GetMaxGameClients() - 1) return nullptr;
+    if ((playerMask & (1ULL << slot)) == 0) return nullptr;
+
     return g_Players[slot];
 }
 
 void PlayerManager::RegisterPlayer(CPlayerSlot slot, Player* player)
 {
     int playerid = slot.Get();
-    if(playerid < 0 || playerid >= GetMaxGameClients()) return;
+    if (playerid < 0 || playerid >= GetMaxGameClients()) return;
 
-    if(g_Players[playerid] != nullptr) return;
+    if (g_Players[playerid] != nullptr) return;
 
     g_Players[playerid] = player;
     playerMask |= (1ULL << playerid);
@@ -57,9 +58,9 @@ void PlayerManager::RegisterPlayer(CPlayerSlot slot, Player* player)
 void PlayerManager::UnregisterPlayer(CPlayerSlot slot)
 {
     int playerid = slot.Get();
-    if(playerid < 0 || playerid >= GetMaxGameClients()) return;
+    if (playerid < 0 || playerid >= GetMaxGameClients()) return;
 
-    if((playerMask & (1ULL << playerid)) != 0) return;
+    if ((playerMask & (1ULL << playerid)) != 0) return;
 
     delete g_Players[playerid];
     g_Players[playerid] = nullptr;
@@ -70,8 +71,8 @@ int PlayerManager::GetPlayers()
 {
     int count = 0;
 
-    for(int i = 0; i < GetMaxGameClients(); i++)
-        if(g_Players[i] != nullptr)
+    for (int i = 0; i < GetMaxGameClients(); i++)
+        if (g_Players[i] != nullptr)
             ++count;
 
     return count;
@@ -100,9 +101,9 @@ void PlayerManager::Shutdown()
 
 void PlayerManager::GameFrame(bool a, bool b, bool c)
 {
-    for(int i = 0; i < GetPlayerCap(); i++) {
+    for (int i = 0; i < GetPlayerCap(); i++) {
         Player* player = GetPlayer(i);
-        if(player) player->Think();
+        if (player) player->Think();
     }
 }
 
@@ -112,7 +113,20 @@ bool PlayerManager::ClientConnect(CPlayerSlot slot, const char* pszName, uint64_
     Player* player = new Player(false, slot.Get(), pszName, xuid, ip_address);
     RegisterPlayer(slot, player);
 
-    RETURN_META_VALUE(MRES_IGNORED, true);
+    ClassData data({ { "plugin_name", "core" } }, "Event", nullptr);
+    g_pluginManager.ExecuteEvent("core", "OnClientConnect", { slot.Get() }, &data);
+
+    bool response = true;
+    try
+    {
+        response = std::any_cast<bool>(data.GetData<std::any>("event_return"));
+    }
+    catch (std::bad_any_cast e)
+    {
+        response = true;
+    }
+
+    RETURN_META_VALUE(MRES_IGNORED, response);
 }
 
 void PlayerManager::OnClientConnected(CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, const char* pszAddress, bool bFakePlayer)
@@ -130,8 +144,10 @@ void PlayerManager::OnClientConnected(CPlayerSlot slot, const char* pszName, uin
 
 void PlayerManager::ClientDisconnect(CPlayerSlot slot, ENetworkDisconnectionReason reason, const char* pszName, uint64 xuid, const char* pszNetworkID)
 {
+    g_pluginManager.ExecuteEvent("core", "OnClientDisconnect", { slot.Get() }, nullptr);
+
     Player* player = GetPlayer(slot);
-    if(player) {
+    if (player) {
         g_VGUI.Unregister(player);
         UnregisterPlayer(slot);
     }
