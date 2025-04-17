@@ -111,37 +111,37 @@ std::any VFunctionHook::Call(std::vector<std::any> arguments)
             PRINTF("Invalid Data Type: '%c'.\n", m_function_args.at(i));
             break;
         }
-
-        std::any retval = nullptr;
-        if (m_function_return == 'p')
-            retval = new ClassData({ { "ptr", (void*)dcCallPointer(vfunctionCallVM, m_pfn) }, { "should_mark_freeable", true } }, "Memory", nullptr);
-        else if (m_function_return == 'f')
-            retval = (float)dcCallFloat(vfunctionCallVM, m_pfn);
-        else if (m_function_return == 'b')
-            retval = (bool)dcCallBool(vfunctionCallVM, m_pfn);
-        else if (m_function_return == 'd')
-            retval = (double)dcCallDouble(vfunctionCallVM, m_pfn);
-        else if (m_function_return == 'i')
-            retval = (int)dcCallInt(vfunctionCallVM, m_pfn);
-        else if (m_function_return == 'u')
-            retval = (uint32_t)dcCallInt(vfunctionCallVM, m_pfn);
-        else if (m_function_return == 's')
-            retval = std::string((const char*)dcCallPointer(vfunctionCallVM, m_pfn));
-        else if (m_function_return == 'I')
-            retval = (int64_t)dcCallLongLong(vfunctionCallVM, m_pfn);
-        else if (m_function_return == 'U')
-            retval = (uint64_t)dcCallLongLong(vfunctionCallVM, m_pfn);
-        else if (m_function_return == 'v')
-        {
-            dcCallVoid(vfunctionCallVM, m_pfn);
-            retval = nullptr;
-        }
-        else
-        {
-            PRINTF("Invalid return type: '%c'.\n", m_function_return);
-            retval = nullptr;
-        }
-
-        return retval;
     }
+
+    std::any retval = nullptr;
+    if (m_function_return == 'p')
+        retval = new ClassData({ { "ptr", (void*)dcCallPointer(vfunctionCallVM, m_pfn) }, { "should_mark_freeable", true } }, "Memory", nullptr);
+    else if (m_function_return == 'f')
+        retval = (float)dcCallFloat(vfunctionCallVM, m_pfn);
+    else if (m_function_return == 'b')
+        retval = (bool)dcCallBool(vfunctionCallVM, m_pfn);
+    else if (m_function_return == 'd')
+        retval = (double)dcCallDouble(vfunctionCallVM, m_pfn);
+    else if (m_function_return == 'i')
+        retval = (int)dcCallInt(vfunctionCallVM, m_pfn);
+    else if (m_function_return == 'u')
+        retval = (uint32_t)dcCallInt(vfunctionCallVM, m_pfn);
+    else if (m_function_return == 's')
+        retval = std::string((const char*)dcCallPointer(vfunctionCallVM, m_pfn));
+    else if (m_function_return == 'I')
+        retval = (int64_t)dcCallLongLong(vfunctionCallVM, m_pfn);
+    else if (m_function_return == 'U')
+        retval = (uint64_t)dcCallLongLong(vfunctionCallVM, m_pfn);
+    else if (m_function_return == 'v')
+    {
+        dcCallVoid(vfunctionCallVM, m_pfn);
+        retval = nullptr;
+    }
+    else
+    {
+        PRINTF("Invalid return type: '%c'.\n", m_function_return);
+        retval = nullptr;
+    }
+
+    return retval;
 }

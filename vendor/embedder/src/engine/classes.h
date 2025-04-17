@@ -29,9 +29,9 @@ public:
         {
             return std::any_cast<T>(m_classData[key]);
         }
-        catch (std::bad_any_cast &e)
+        catch (std::bad_any_cast& e)
         {
-            return *(T *)0;
+            return T();
         }
     }
 
@@ -42,9 +42,9 @@ public:
         {
             return std::any_cast<T>(&(m_classData[key]));
         }
-        catch (std::bad_any_cast &e)
+        catch (std::bad_any_cast& e)
         {
-            return (T *)0;
+            return (T*)0;
         }
     }
 
@@ -55,7 +55,7 @@ public:
         {
             return std::any_cast<T>(m_classData[key]);
         }
-        catch (std::bad_any_cast &e)
+        catch (std::bad_any_cast& e)
         {
             return value;
         }

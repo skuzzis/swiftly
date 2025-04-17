@@ -42,7 +42,6 @@ inline std::string& trim(std::string& s, const char* t = ws)
 #include <dbghelp.h>
 
 LONG WINAPI CustomUnhandledExceptionFilter(EXCEPTION_POINTERS* pExceptionPointers);
-PVOID vectoredPtr;
 
 bool BeginCrashListener() {
     if (!Files::ExistsPath("addons/swiftly/dumps"))
@@ -70,12 +69,12 @@ bool BeginCrashListener() {
     }
     startup_cmd = implode(exp2, " ");
 
-    vectoredPtr = AddVectoredExceptionHandler(1, CustomUnhandledExceptionFilter);
+    SetUnhandledExceptionFilter(CustomUnhandledExceptionFilter);
     return true;
 }
 
 void EndCrashListener() {
-    RemoveVectoredExceptionHandler(vectoredPtr);
+    SetUnhandledExceptionFilter(NULL);
 }
 
 LONG WINAPI CustomUnhandledExceptionFilter(EXCEPTION_POINTERS* pExceptionPointers)

@@ -84,20 +84,20 @@ EValue SerializeData(std::any data, EContext* state)
             return EValue(state, nullptr);
         else if (value.type() == typeid(EValue))
             return std::any_cast<EValue>(value);
-        else if(value.type() == typeid(Vector))
+        else if (value.type() == typeid(Vector))
             return EValue(state, std::any_cast<Vector>(value));
-        else if(value.type() == typeid(Vector2D))
+        else if (value.type() == typeid(Vector2D))
             return EValue(state, std::any_cast<Vector2D>(value));
-        else if(value.type() == typeid(Vector4D))
+        else if (value.type() == typeid(Vector4D))
             return EValue(state, std::any_cast<Vector4D>(value));
-        else if(value.type() == typeid(Color))
+        else if (value.type() == typeid(Color))
             return EValue(state, std::any_cast<Color>(value));
-        else if(value.type() == typeid(QAngle))
+        else if (value.type() == typeid(QAngle))
             return EValue(state, std::any_cast<QAngle>(value));
-        else if(value.type() == typeid(ClassData*)) {
+        else if (value.type() == typeid(ClassData*)) {
             ClassData* data = std::any_cast<ClassData*>(value);
             EValue val(state, data);
-            if(data->HasData("should_mark_freeable")) MarkDeleteOnGC(data);
+            if (data->HasData("should_mark_freeable")) MarkDeleteOnGC(data);
             return val;
         }
         else if (value.type() == typeid(std::vector<std::string>))
@@ -140,7 +140,7 @@ EValue SerializeData(std::any data, EContext* state)
             return EValue(state, nullptr);
         }
     }
-    catch (std::bad_any_cast err)
+    catch (std::bad_any_cast& err)
     {
         PRINTF("Invalid casting: %s\n", err.what());
         return EValue(state, nullptr);
@@ -159,7 +159,7 @@ std::any DeserializeData(EValue ref, EContext* state)
         return ref.cast<int64_t>();
     else if (ref.isString())
         return ref.cast<std::string>();
-    else if(ref.isInstance<ClassData*>())
+    else if (ref.isInstance<ClassData*>())
         return ref.cast<ClassData*>();
     else if (ref.isTable())
     {

@@ -294,6 +294,7 @@ for sdk_target in MMSPlugin.sdk_targets:
 			"/MT",
 			"/W3",
 			"/Z7",
+      "/EHsc",
 			"/IGNORE:4101,4267,4244,4005,4003,4530",
 		]
 

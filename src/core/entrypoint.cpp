@@ -242,7 +242,7 @@ bool OnClientCommand(int playerid, std::string command)
     {
         response = std::any_cast<bool>(data.GetData<std::any>("event_return"));
     }
-    catch (std::bad_any_cast e)
+    catch (std::bad_any_cast& e)
     {
         response = true;
     }

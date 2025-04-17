@@ -511,7 +511,7 @@ LoadScriptingComponent(hooks, [](PluginObject plugin, EContext* ctx) -> void {
             else
                 PRINTF("Unknown Data Type: %s\n", value.type().name());
         }
-        catch (std::bad_any_cast err)
+        catch (std::bad_any_cast& err)
         {
             PRINTF("Invalid casting: %s\n", err.what());
         }

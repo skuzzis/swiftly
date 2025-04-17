@@ -51,7 +51,8 @@ T Configuration::FetchValue(std::string key)
 
     try {
         return std::any_cast<T>(config[key]);
-    } catch(std::bad_any_cast e) {
+    }
+    catch (std::bad_any_cast& e) {
         fprintf(stdout, "%s: %s\n", key.c_str(), e.what());
         return (T)0;
     }
