@@ -2,6 +2,9 @@
 
 #include <memory/hooks/manager.h>
 #include <utils/common.h>
+#include <plugins/manager.h>
+
+#include "ehandle.h"
 
 /*
     Args List Convention
@@ -27,15 +30,121 @@ struct Hook
     bool isVirtual;
 };
 
+struct EntityIOConnectionDesc_t
+{
+    string_t m_targetDesc;
+    string_t m_targetInput;
+    string_t m_valueOverride;
+    CEntityHandle m_hTarget;
+    EntityIOTargetType_t m_nTargetType;
+    int32 m_nTimesToFire;
+    float m_flDelay;
+};
+
+struct EntityIOConnection_t : EntityIOConnectionDesc_t
+{
+    bool m_bMarkedForRemoval;
+    EntityIOConnection_t* m_pNext;
+};
+
+struct EntityIOOutputDesc_t
+{
+    const char* m_pName;
+    uint32 m_nFlags;
+    uint32 m_nOutputOffset;
+};
+
+class CEntityIOOutput
+{
+public:
+    void* vtable;
+    EntityIOConnection_t* m_pConnections;
+    EntityIOOutputDesc_t* m_pDesc;
+};
+
 std::map<dyno::IHook*, std::vector<Hook>> hooksList;
 std::map<std::string, dyno::IHook*> hooksMap;
+std::map<uint64_t, std::vector<std::string>> outputHooksList;
 
 dyno::ReturnAction HookCallback(dyno::CallbackType type, dyno::IHook& hook) {
     dyno::IHook* hptr = &hook;
     std::string callbackType = (type == dyno::CallbackType::Pre ? "Pre" : "Post");
     if (hooksList.find(hptr) == hooksList.end())
         return dyno::ReturnAction::Ignored;
+
+    ClassData* ev = new ClassData({ { "plugin_name", "core" }, { "hook_ptr", hptr } }, "Event", nullptr);
+    for (auto hk : hooksList[hptr])
+    {
+        if (g_pluginManager.ExecuteEvent("core", "hook:" + callbackType + ":" + hk.id, {}, ev) != EventResult::Continue) {
+            delete ev;
+            return dyno::ReturnAction::Supercede;
+        }
+    }
+
+    delete ev;
+    return dyno::ReturnAction::Ignored;
 }
+
+dyno::ReturnAction Hook_FireOutputInternal(dyno::CallbackType type, dyno::IHook& hook) {
+    CEntityIOOutput* pThis = hook.getArgument<CEntityIOOutput*>(0);
+    CEntityInstance* pActivator = hook.getArgument<CEntityInstance*>(1);
+    CEntityInstance* pCaller = hook.getArgument<CEntityInstance*>(2);
+    float delay = hook.getArgument<float>(4);
+
+    std::vector searchOutputs{
+        ((uint64_t)hash_32_fnv1a_const("*") << 32 | hash_32_fnv1a_const(pThis->m_pDesc->m_pName)),
+        ((uint64_t)hash_32_fnv1a_const("*") << 32 | hash_32_fnv1a_const("*"))
+    };
+
+    if (pCaller)
+    {
+        searchOutputs.push_back(((uint64_t)hash_32_fnv1a_const(pCaller->GetClassname()) << 32 | hash_32_fnv1a_const(pThis->m_pDesc->m_pName)));
+        searchOutputs.push_back(((uint64_t)hash_32_fnv1a_const(pCaller->GetClassname()) << 32 | hash_32_fnv1a_const("*")));
+    }
+
+    std::vector<std::string> hookIds;
+
+    if (pCaller)
+        for (auto output : searchOutputs)
+            for (auto hookid : outputHooksList[output])
+                hookIds.push_back(hookid);
+
+    if (hookIds.size() > 0)
+    {
+        ClassData* ev = new ClassData({ { "plugin_name", "core" } }, "Event", nullptr);
+        ClassData* entIOOutput = new ClassData({ { "class_name", "CEntityIOOutput" }, { "class_ptr", pThis } }, "SDKClass", nullptr);
+        ClassData* Activator = new ClassData({ { "class_name", "CEntityInstance" }, { "class_ptr", pActivator } }, "SDKClass", nullptr);
+        ClassData* Caller = new ClassData({ { "class_name", "CEntityInstance" }, { "class_ptr", pCaller } }, "SDKClass", nullptr);
+        for (auto id : hookIds)
+        {
+            auto result = g_pluginManager.ExecuteEvent("core", std::string("hook:") + (type == dyno::CallbackType::Pre ? "Pre" : "Post") + ":" + id, {
+                entIOOutput,
+                pThis->m_pDesc->m_pName,
+                Activator,
+                Caller,
+                delay
+                }, ev);
+            if (result != EventResult::Continue)
+            {
+                delete ev;
+                delete entIOOutput;
+                delete Activator;
+                delete Caller;
+                return dyno::ReturnAction::Supercede;
+            }
+        }
+
+        delete ev;
+        delete entIOOutput;
+        delete Activator;
+        delete Caller;
+    }
+
+    return dyno::ReturnAction::Ignored;
+}
+
+FunctionHook FireOutputInternalPre("FireOutputInternal", dyno::CallbackType::Pre, Hook_FireOutputInternal, "ppppf", 'v');
+FunctionHook FireOutputInternalPost("FireOutputInternal", dyno::CallbackType::Post, Hook_FireOutputInternal, "ppppf", 'v');
 
 LoadScriptingComponent(hooks, [](PluginObject plugin, EContext* ctx) -> void {
     ADD_CLASS("Hooks");
@@ -142,6 +251,20 @@ LoadScriptingComponent(hooks, [](PluginObject plugin, EContext* ctx) -> void {
         else {
             context->SetReturn(((VFunctionHook*)hk.hookPtrPre)->Call(hookPayload));
         }
+    });
+
+    ADD_CLASS_FUNCTION("Hooks", "AddEntityOutputHook", [](FunctionContext* context, ClassData* data) -> void {
+        std::string classname = context->GetArgumentOr<std::string>(0, "");
+        std::string output = context->GetArgumentOr<std::string>(1, "");
+
+        std::string id = get_uuid();
+        uint64_t outputKey = ((uint64_t)hash_32_fnv1a_const(classname.c_str()) << 32 | hash_32_fnv1a_const(output.c_str()));
+
+        if (outputHooksList.find(outputKey) == outputHooksList.end())
+            outputHooksList.insert({ outputKey, {} });
+
+        outputHooksList[outputKey].push_back(id);
+        context->SetReturn(id);
     });
 
     ADD_CLASS_FUNCTION("Event", "IsHook", [](FunctionContext* context, ClassData* data) -> void {
