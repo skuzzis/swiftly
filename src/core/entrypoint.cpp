@@ -3,6 +3,7 @@
 #include <tier1/convar.h>
 #include <interfaces/interfaces.h>
 #include <metamod_oslink.h>
+#include <public/tier0/platform.h>
 
 #include <utils/common.h>
 
@@ -16,6 +17,8 @@
 #include <engine/precacher/precacher.h>
 
 #include <entities/system.h>
+
+#include <sdk/schema.h>
 
 #include <server/configuration/configuration.h>
 #include <server/translations/translations.h>
@@ -245,6 +248,24 @@ void SwiftlyS2::OnLevelShutdown()
 
 std::list<std::list<std::pair<int64_t, std::function<void()>>>::iterator> queueRemoveTimeouts;
 
+void UpdatePlayers()
+{
+    // Credits to: https://github.com/Source2ZE/ServerListPlayersFix (Source2ZE Team)
+    if (!engine->GetServerGlobals() || !g_SteamAPI.SteamGameServer())
+        return;
+
+    for (int i = 0; i < engine->GetServerGlobals()->maxClients; i++)
+    {
+        auto steamId = engine->GetClientSteamID(CPlayerSlot(i));
+        if (steamId)
+        {
+            auto controller = g_pEntitySystem->GetEntityInstance(CEntityIndex(i + 1));
+            if (controller)
+                g_SteamAPI.SteamGameServer()->BUpdateUserData(*steamId, schema::GetPropPtr<char>(controller, "CBasePlayerController", "m_iszPlayerName"), gameclients->GetPlayerScore(CPlayerSlot(i)));
+        }
+    }
+}
+
 void SwiftlyS2::GameFrame(bool simulate, bool first, bool last)
 {
     if (processingTimeouts) {
@@ -261,6 +282,16 @@ void SwiftlyS2::GameFrame(bool simulate, bool first, bool last)
 
         queueRemoveTimeouts.clear();
         processingTimeouts = (timeoutsArray.size() > 0);
+    }
+
+    static double g_flNextUpdate = 0.0;
+    double curtime = Plat_FloatTime();
+    if (curtime > g_flNextUpdate)
+    {
+        // Credits to: https://github.com/Source2ZE/ServerListPlayersFix (Source2ZE Team)
+        UpdatePlayers();
+
+        g_flNextUpdate = curtime + 5.0;
     }
 }
 

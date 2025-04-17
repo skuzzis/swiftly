@@ -5,7 +5,7 @@
 #include <set>
 #include <string>
 
-typedef void (*EventListenerCallback)(IGameEvent *event);
+typedef void (*EventListenerCallback)(IGameEvent* event);
 
 class EventManager : public IGameEventListener2
 {
@@ -19,11 +19,13 @@ public:
     void RegisterGameEvents();
     void RegisterGameEventListen(std::string ev_name);
 
-    void FireGameEvent(IGameEvent *pEvent) override;
-    bool OnFireEvent(IGameEvent *pEvent, bool bDontBroadcast);
-    bool OnPostFireEvent(IGameEvent *pEvent, bool bDontBroadcast);
+    void FireGameEvent(IGameEvent* pEvent) override;
+    bool OnFireEvent(IGameEvent* pEvent, bool bDontBroadcast);
+    bool OnPostFireEvent(IGameEvent* pEvent, bool bDontBroadcast);
 
-    int LoadEventsFromFile(const char *filePath, bool searchAll);
+    void StartupServer(const GameSessionConfiguration_t& config, ISource2WorldSession*, const char*);
+
+    int LoadEventsFromFile(const char* filePath, bool searchAll);
 };
 
 extern EventManager g_eventManager;

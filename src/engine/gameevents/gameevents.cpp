@@ -17,6 +17,8 @@
 
 extern std::map<std::string, std::string> gameEventsRegister;
 
+SH_DECL_EXTERN3_void(INetworkServerService, StartupServer, SH_NOATTRIB, 0, const GameSessionConfiguration_t&, ISource2WorldSession*, const char*);
+
 SH_DECL_HOOK2(IGameEventManager2, FireEvent, SH_NOATTRIB, 0, bool, IGameEvent*, bool);
 SH_DECL_HOOK2(IGameEventManager2, LoadEventsFromFile, SH_NOATTRIB, 0, int, const char*, bool);
 int loadEventFromFileHookID = -1;
@@ -106,6 +108,7 @@ int EventManager::LoadEventsFromFile(const char* filePath, bool searchAll)
 
         SH_ADD_HOOK(IGameEventManager2, FireEvent, g_gameEventManager, SH_MEMBER(this, &EventManager::OnFireEvent), false);
         SH_ADD_HOOK(IGameEventManager2, FireEvent, g_gameEventManager, SH_MEMBER(this, &EventManager::OnPostFireEvent), true);
+        SH_ADD_HOOK(INetworkServerService, StartupServer, g_pNetworkServerService, SH_MEMBER(this, &EventManager::StartupServer), true);
     }
 
     RETURN_META_VALUE(MRES_IGNORED, 0);
@@ -115,9 +118,15 @@ void EventManager::Shutdown()
 {
     SH_REMOVE_HOOK(IGameEventManager2, FireEvent, g_gameEventManager, SH_MEMBER(this, &EventManager::OnFireEvent), false);
     SH_REMOVE_HOOK(IGameEventManager2, FireEvent, g_gameEventManager, SH_MEMBER(this, &EventManager::OnPostFireEvent), true);
+    SH_REMOVE_HOOK(INetworkServerService, StartupServer, g_pNetworkServerService, SH_MEMBER(this, &EventManager::StartupServer), true);
     SH_REMOVE_HOOK_ID(loadEventFromFileHookID);
 
     g_gameEventManager->RemoveListener(this);
+}
+
+void EventManager::StartupServer(const GameSessionConfiguration_t& config, ISource2WorldSession*, const char*)
+{
+    RegisterGameEvents();
 }
 
 void EventManager::FireGameEvent(IGameEvent* pEvent) {}

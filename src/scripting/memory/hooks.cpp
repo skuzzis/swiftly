@@ -123,7 +123,7 @@ dyno::ReturnAction Hook_FireOutputInternal(dyno::CallbackType type, dyno::IHook&
                 Activator,
                 Caller,
                 delay
-                }, ev);
+            }, ev);
             if (result != EventResult::Continue)
             {
                 delete ev;
