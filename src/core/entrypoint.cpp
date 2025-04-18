@@ -164,8 +164,6 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     else
         PRINTRET("Failed to load configurations. The framework will not work.\n", false);
 
-    META_CONVAR_REGISTER(FCVAR_RELEASE | FCVAR_SERVER_CAN_EXECUTE | FCVAR_CLIENT_CAN_EXECUTE | FCVAR_GAMEDLL);
-
     g_Logger.AddLogger("core", false);
 
     g_sdk.LoadSDKData();
@@ -190,6 +188,8 @@ bool SwiftlyS2::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, boo
     extManager.LoadExtensions();
 
     g_dbManager.LoadDatabases();
+
+    META_CONVAR_REGISTER(FCVAR_RELEASE | FCVAR_SERVER_CAN_EXECUTE | FCVAR_CLIENT_CAN_EXECUTE | FCVAR_GAMEDLL);
 
     g_pluginManager.LoadPlugins("");
     g_pluginManager.StartPlugins();
